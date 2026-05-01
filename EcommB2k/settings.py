@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'feedback',
     'bloggs',
     'sellerdash',
+    'emailapp',
     
 
 
@@ -98,7 +99,7 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
+        "LOCATION": "redis://[IP_ADDRESS]/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
