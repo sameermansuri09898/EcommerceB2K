@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
 
 class CustomUser(AbstractUser):
     mobile_number = models.CharField()
@@ -20,6 +21,10 @@ class Otp(models.Model):
     
     def __str__(self):
         return self.user.username
+
+
+    def otp_is_expiry(self):    
+        return self.created_at + timezone.timedelta(minutes=10) > timezone.now()    
 
 # class CustumerBuyer(models.Model):
 #     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='custumer')
