@@ -1,66 +1,78 @@
 from .models import Otp, CustomUser
 from rest_framework import serializers
 from .utils import random_otp, send_otp_email
+from django.utils import timezone
 
-class OtpSerializer(serializers.ModelSerializer):
+
+class OtpSerializer(serializers.Serializer):
     email=serializers.EmailField()
     otp=serializers.IntegerField()
-    class Meta:
-        model = Otp
-        fields = ['email', 'otp'] 
 
     def validate(self,attrs):
-        otp=attrs.get('otp')
         email=attrs.get('email')
+        otp=attrs.get('otp')
 
-        user=CustomUser.objects.get(email=email)
+        if not email or not otp:
+            raise serializers.ValidationError("Email and OTP are required")
 
-        if user is None:
-            raise serializers.ValidationError("user is not found")
+        try:
+            user=CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("User not found")    
 
-        user_obj=Otp.objects.filter(user=user,otp=otp,is_verified=False).first()
-        if user_obj is None:
-            raise serializers.ValidationError("otp is not Found")
-        if user_obj.otp_is_expiry():
-            user_obj.delete()
-            raise serializers.ValidationError("otp is expired")
+        obj_otp=Otp.objects.filter(user=user).last() 
+        if not obj_otp:
+            raise serializers.ValidationError("Otp not found")
 
-        user_obj.is_verified=True
-        user_obj.save()
+        if obj_otp.is_expired():
+            raise serializers.ValidationError("Otp expired")    
+
+        if obj_otp.otp != otp:
+            raise serializers.ValidationError("Invalid OTP")
+
+
+        if obj_otp.is_verified:
+            raise serializers.ValidationError("Otp already verified")
+
+        if user.is_verified==True:
+            raise serializers.ValidationError("User is already verified")
+
+        obj_otp.is_verified=True
+        obj_otp.save()    
         user.is_verified=True
-        user.save()
-        return attrs
+        user.save()    
+        return attrs   
+ 
+       
 
-class OtpResendSerializer(serializers.ModelSerializer):
-    email=serializers.EmailField()
-    otp=serializers.CharField()
-    class Meta:
-        model = Otp
-        fields = ['email','otp']
-    def validate(self,attrs):
-        otp=attrs.get('otp')
-        email=attrs.get('email')
 
-        user=CustomUser.objects.get(email=email)
-        if user is None:
-            raise serializers.ValidationError("user is not found")
+class OtpResendSerializer(serializers.Serializer):
+    email = serializers.EmailField()
 
-        if Otp.objects.filter(user=user,is_verified=True).first():
-            raise serializers.ValidationError("otp is already verified")
+    def validate_email(self, value):
+        try:
+            user = CustomUser.objects.get(email=value)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("User not found")
+
+        # already verified → block resend
+        if user.is_verified:
+            raise serializers.ValidationError("User already verified")
+
+        # check latest OTP
+        obj_otp = Otp.objects.filter(user=user).last()
+
+        if not obj_otp:
+            raise serializers.ValidationError("OTP not found")
+
+        time_limit = obj_otp.created_at + timezone.timedelta(seconds=60)   
+        if time_limit >= timezone.now():
+            seconds_remaining = (time_limit - timezone.now()).total_seconds()
+            raise serializers.ValidationError(f"Wait for {int(seconds_remaining)} seconds to resend OTP")   
+
+   
+
+        self.user = user
+        return value
         
-        otp=random_otp()
-        send_otp_email(user.email, str(otp))
-        Otp.objects.create(user=user, otp=otp, is_verified=False)
-        user.is_verified=False
-        user.save()
-        return attrs
 
-
-class Loginserializer(serializers.Serializer):
-    email=serializers.EmailField()
-    password=serializers.CharField()
-
-    class Meta:
-        model = CustomUser
-        fields = ['email', 'password'] 
-     

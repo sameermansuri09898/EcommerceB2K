@@ -23,8 +23,13 @@ class Otp(models.Model):
         return self.user.username
 
 
-    def otp_is_expiry(self):    
-        return self.created_at + timezone.timedelta(minutes=10) > timezone.now()    
+    def is_expired(self):
+        return timezone.now() > self.created_at + timezone.timedelta(minutes=10)
+    
+  
+
+
+  
 
 # class CustumerBuyer(models.Model):
 #     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='custumer')

@@ -82,3 +82,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
         validated_data.pop('confirm_password')
         user = CustomUser.objects.create_user(**validated_data)
         return user
+
+class Loginserializer(serializers.Serializer):
+    email=serializers.EmailField()
+    password=serializers.CharField()
+
+    class Meta:
+        model = CustomUser
+        fields = ['email', 'password'] 
+     
