@@ -84,10 +84,10 @@ class CustomUserSerializer(serializers.ModelSerializer):
         return user
 
 class Loginserializer(serializers.Serializer):
-    email=serializers.EmailField()
+    username=serializers.CharField()
     password=serializers.CharField()
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'password'] 
+        fields = ['username', 'password'] 
      

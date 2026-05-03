@@ -1,4 +1,3 @@
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .Accountregserializer import CustomUserSerializer,Loginserializer
@@ -26,7 +25,7 @@ class RegisterView(APIView):
             send_otp_email(user.email, str(otp))
             send_wellcome_email(user.email)
             Otp.objects.create(user=user, otp=otp, is_verified=False)
-            user.is_verify=False
+            user.is_verified=False
             user.save()
             return Response({"message":"User created successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -68,15 +67,29 @@ class LoginView(APIView):
             password=serializer.validated_data['password']
             user=authenticate(username=username,password=password)
 
+            if user is None:
+                return Response({"message":"Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
             if user.is_verified==False:
                 return Response({"message":"User is not verified"}, status=status.HTTP_401_UNAUTHORIZED)
 
-            
+        
+
             if user is not None:
                 refresh = RefreshToken.for_user(user)
-                return Response({"message":"User logged in successfully", "access_token": str(refresh.access_token),"refresh_token": str(refresh)}, status=status.HTTP_201_CREATED)
+                return Response({"message":"User logged in successfully","role":user.role, "access_token": str(refresh.access_token),"refresh_token": str(refresh)}, status=status.HTTP_201_CREATED)
 
             return Response({"message":"Invalid password"}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    
+class Logout(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    def post(self,request):
+        try:
+            refresh_token=request.data["refresh_token"]
+            token=RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"message":"User logged out successfully"}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"message":str(e)}, status=status.HTTP_401_UNAUTHORIZED)
