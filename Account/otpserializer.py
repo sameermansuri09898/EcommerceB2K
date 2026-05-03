@@ -15,10 +15,10 @@ class OtpSerializer(serializers.Serializer):
         if not email or not otp:
             raise serializers.ValidationError("Email and OTP are required")
 
-        try:
-            user=CustomUser.objects.get(email=email)
-        except CustomUser.DoesNotExist:
-            raise serializers.ValidationError("User not found")    
+        user=CustomUser.objects.get(email=email)
+        
+        if user is None:
+            raise serializers.ValidationError("User not found")
 
         obj_otp=Otp.objects.filter(user=user).last() 
         if not obj_otp:

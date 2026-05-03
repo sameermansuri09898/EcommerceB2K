@@ -14,6 +14,7 @@ from .serializer import sellerserializer
 from Account.models import Otp
 from .Successselleremail import send_wellcome_email
 
+
 class selleaccount(APIView):
 
   permission_classes=[IsAuthenticated]
@@ -35,4 +36,37 @@ class selleaccount(APIView):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
   
 
-  
+class Itpverification(APIView):
+  permission_classes=[IsAuthenticated]
+  authentication_classes=[JWTAuthentication]
+  def post(self,request):
+    serializer=OtpSerializer(data=request.data)
+    if serializer.is_valid():
+      seller=serializer.save()
+      return Response({"message":"Shipping address created successfully"}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+
+
+class Itpverification(APIView):
+  permission_classes=[IsAuthenticated]
+  authentication_classes=[JWTAuthentication]
+  def post(self,request):
+    serializer=OtpSerializer(data=request.data)
+    if serializer.is_valid():
+      return Response({"message":"Otp verified successfully"}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+    
+class resendotp(APIView):
+    permission_classes=[IsAuthenticated]
+    authentication_classes=[JWTAuthentication]
+    def post(self,request):
+      serializer=OtpResendSerializer(data=request.data)
+      if serializer.is_valid():
+        seller=serializer.user
+        otp=random_otp()
+        send_otp_email(seller.email, str(otp))
+        Otp.objects.create(user=seller, otp=otp, is_verified=False)
+        seller.is_verified=False
+        seller.save()
+        return Response({"message":"Otp sent successfully"}, status=status.HTTP_201_CREATED)
+      return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  

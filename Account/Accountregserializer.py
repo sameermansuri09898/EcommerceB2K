@@ -5,18 +5,26 @@ import re
 
 class CustomUserSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(write_only=True)
+   
     class Meta:
         model = CustomUser
         fields = ['id', 'username', 'email', 'password', 'confirm_password','mobile_number', 'is_verified', 'role', 'bio', 'profile_image']
 
         extra_kwargs = {
-            'password': {'write_only': True}
+            'password': {'write_only': True},
+            'email': {'unique': True}
         }
 
     def validate(self, attrs):
         if attrs['password'] != attrs['confirm_password']:
             raise serializers.ValidationError("Passwords do not match")
         return attrs
+
+    def validate_email(self,value):
+        if CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email already exists")    
+
+        return value    
 
     def validate_username(self, value):
             if CustomUser.objects.filter(username=value).exists():
