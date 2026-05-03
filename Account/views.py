@@ -1,19 +1,28 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .Accountregserializer import CustomUserSerializer,Loginserializer
+
 from rest_framework.generics import ListCreateAPIView
 from rest_framework import status
 from .models import Otp,BuyerShipping
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
+
 from .utils import random_otp, send_otp_email,send_wellcome_email
 from .otpserializer import OtpSerializer,OtpResendSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from .shippingserial import BuyerShippingSerializer
 
+from sellerdash.services.rate_limit import rate_limit
+
+
+"""
+ Account Registration Login Logout and password reset, Otp verification and resend otp 
+"""
 class RegisterView(APIView):
     permission_classes = [AllowAny] 
 
@@ -42,6 +51,7 @@ class OtpView(APIView):
 
 class ResendView(APIView):
     permission_classes = [AllowAny]
+    @rate_limit(3,60*10)
     def post(self,request):
         serializer = OtpResendSerializer(data=request.data)
         if serializer.is_valid():
@@ -126,6 +136,7 @@ class setshippingAddress(APIView):
   permission_classes=[IsAuthenticated]
   authentication_classes=[JWTAuthentication]
 
+  @rate_limit(3,60*10)
   def post(self,request,id):
     user=request.user
     shipping=BuyerShipping.objects.filter(id=id,user=user)
