@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 """
- block for products 
+ block for products and user bloggs  
 """
 
 
@@ -17,6 +17,7 @@ class Productbloggs(models.Model):
   state=models.CharField(max_length=100)
   country=models.CharField(max_length=100)
   pincode=models.CharField(max_length=6)
+
   
 
 
