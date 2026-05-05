@@ -1,11 +1,8 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
-from .import views
+from .views import Bloggview
 
-router=DefaultRouter()
-router.register('blogg',views.Bloggview,basename='blogg')
-
-urlpatterns = [    
+urlpatterns = [
+    path('blogg/', Bloggview.as_view(), name='blogg'),  
+    path('blogg/<int:id>/', Bloggview.as_view(), name='blogg'),
 ]
-
-urlpatterns += router. urls

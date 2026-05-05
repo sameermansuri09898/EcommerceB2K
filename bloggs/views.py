@@ -7,13 +7,14 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from sellerdash.services.rate_limit import rate_limit
 from sellerdash.permission import SellerPermission
+from django.shortcuts import get_object_or_404
 
 from django.core.cache import cache
 
 
 class Bloggview(APIView):
-  permission_classes=[IsAuthenticated,SellerPermission]
-  authentication_classes=[JWTAuthentication]
+  # permission_classes=[IsAuthenticated,SellerPermission]
+  # authentication_classes=[JWTAuthentication]
 
   
   def post(self,request):
@@ -31,7 +32,7 @@ class Bloggview(APIView):
     return Response(serializer.data, status=status.HTTP_200_OK)  
 
   def put(self,request,id):
-    bloggs=Productbloggs.objects.get(id=id,user=request.user)
+    bloggs=get_object_or_404(Productbloggs,id=id,user=request.user)
     serializer=ProductbloggsSerializer(bloggs,data=request.data,partial=True)
     if serializer.is_valid():
       serializer.save()
@@ -39,6 +40,6 @@ class Bloggview(APIView):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
 
   def delete(self,request,id):
-    bloggs=Productbloggs.objects.get(id=id,user=request.user)
+    bloggs=get_object_or_404(Productbloggs,id=id,user=request.user)
     bloggs.delete()
     return Response({"message":"Product post deleted successfully"}, status=status.HTTP_200_OK)  
