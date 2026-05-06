@@ -1,45 +1,25 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from sellerdash.permission import SellerPermission
 from .models import Productbloggs
 from .serializer import ProductbloggsSerializer
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.permissions import IsAuthenticated
-from sellerdash.services.rate_limit import rate_limit
-from sellerdash.permission import SellerPermission
-from django.shortcuts import get_object_or_404
 
-from django.core.cache import cache
+class BlogView(generics.ListCreateAPIView):
+
+    queryset = Productbloggs.objects.all()
+    serializer_class = ProductbloggsSerializer
+    authentication_classes = [JWTAuthentication]
 
 
-class Bloggview(APIView):
-  # permission_classes=[IsAuthenticated,SellerPermission]
-  # authentication_classes=[JWTAuthentication]
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [IsAuthenticated(), SellerPermission()]
+        return [IsAuthenticated()]
 
-  
-  def post(self,request):
-    serializer=ProductbloggsSerializer(data=request.data,context={'request':request})
-    if serializer.is_valid():
-      serializer.save()
-      return Response({"message":"Product post created successfully"}, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+    def get_queryset(self):
+      
+        return Productbloggs.objects.filter(user=self.request.user)
 
-  @rate_limit(5,60)
-
-  def get(self,request):
-    bloggs=Productbloggs.objects.filter(user=request.user)
-    serializer=ProductbloggsSerializer(bloggs,many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)  
-
-  def put(self,request,id):
-    bloggs=get_object_or_404(Productbloggs,id=id,user=request.user)
-    serializer=ProductbloggsSerializer(bloggs,data=request.data,partial=True)
-    if serializer.is_valid():
-      serializer.save()
-      return Response({"message":"Product post updated successfully"}, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
-
-  def delete(self,request,id):
-    bloggs=get_object_or_404(Productbloggs,id=id,user=request.user)
-    bloggs.delete()
-    return Response({"message":"Product post deleted successfully"}, status=status.HTTP_200_OK)  
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
