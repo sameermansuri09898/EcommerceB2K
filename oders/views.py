@@ -117,6 +117,3 @@ class productViewSet(viewsets.ModelViewSet):
       return Response({'message':'Product deleted successfully'},status=status.HTTP_200_OK)  
 
 
-
-
-    
