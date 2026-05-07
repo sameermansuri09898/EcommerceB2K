@@ -1,17 +1,13 @@
 from django.shortcuts import render
 from rest_framework import generics,status
 from rest_framework.response import Response
-from .models import Product
+from .models import Product,productimage,colorvarient,sizevarient
 from .productserializer import ProductSerializer
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
 from rest_framework import viewsets
-from .models import Product,productimage,colorvarient,sizevarient
 from django.db import transaction
-from sellerdash.services.cachepage import cache_page_decorators
 from sellerdash.permission import SellerPermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.utils.decorators import method_decorator
 from django.core.cache import cache
 
 class productViewSet(viewsets.ModelViewSet):
@@ -20,10 +16,6 @@ class productViewSet(viewsets.ModelViewSet):
     """
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-
-    permission_classes = [IsAuthenticated,SellerPermission]
-    authentication_classes = [JWTAuthentication]
-
    
     def list(self,request):
       timeout=60*15
@@ -38,6 +30,8 @@ class productViewSet(viewsets.ModelViewSet):
       cache.set(cache_key,serializer.data,timeout)
       return Response(serializer.data,status=status.HTTP_200_OK)  
 
+    permission_classes = [IsAuthenticated,SellerPermission]
+    authentication_classes = [JWTAuthentication] 
     def create(self,request,*args,**kwargs):
       image=request.FILES.getlist('images')
       colors=request.data.getlist('colors')
@@ -63,6 +57,8 @@ class productViewSet(viewsets.ModelViewSet):
         return Response({'message':'Product created successfully'},status=status.HTTP_201_CREATED)
       return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)    
 
+    permission_classes = [IsAuthenticated,SellerPermission]
+    authentication_classes = [JWTAuthentication]   
     def update(self,request,*args,**kwargs):
       instance_obj=self.get_object()
       images=request.FILES.getlist('images')
@@ -91,6 +87,8 @@ class productViewSet(viewsets.ModelViewSet):
         return Response({'message':'Product updated successfully'},status=status.HTTP_200_OK)
       return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)    
 
+    permission_classes = [IsAuthenticated,SellerPermission]
+    authentication_classes = [JWTAuthentication]   
     def partial_update(self,request,*args,**kwargs):
       instance_obj=self.get_object() 
       images=request.FILES.getlist('images')
@@ -119,6 +117,8 @@ class productViewSet(viewsets.ModelViewSet):
         return Response({'message':'Product updated successfully'},status=status.HTTP_200_OK)
       return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
+    permission_classes = [IsAuthenticated,SellerPermission]
+    authentication_classes = [JWTAuthentication]   
     def destroy(self,request,*args,**kwargs):
       instance_obj=self.get_object()
       with transaction.atomic():
