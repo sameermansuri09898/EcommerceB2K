@@ -130,6 +130,26 @@ class productViewSet(viewsets.ModelViewSet):
 
 
 
+class ProductDetailView(generics.RetrieveAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+ 
 
-  
+class Userproductlistview(generics.ListAPIView):
+    
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication] 
 
+    
+    def get(self,request):
+      timeout=60*15
+      cache_key=f"cache_page:{request.get_full_path()}:{request.user.id}"
+      cached_response=cache.get(cache_key)
+      
+      if cached_response:
+        return Response(cached_response,status=status.HTTP_200_OK)  
+      
+      data=Product.objects.filter(user=request.user)
+      serializer=self.get_serializer(data,many=True)
+      cache.set(cache_key,serializer.data,timeout)
+      return Response(serializer.data,status=status.HTTP_200_OK)
