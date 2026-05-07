@@ -10,12 +10,15 @@ from sellerdash.permission import SellerPermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.core.cache import cache
 from.productserializer import VarientProductSerializer
-
+from rest_framework.permissions import AllowAny
+from rest_framework import serializers
 class productViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
     # ---------------- CREATE ----------------
+    permission_classes = [IsAuthenticated,SellerPermission]
+    authentication_classes = [JWTAuthentication] 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -89,62 +92,70 @@ class ProductVraientViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated,SellerPermission]
     authentication_classes = [JWTAuthentication]
 
-    def create(self,request):
-      try:
-        product_id=request.data.get('product_id')
-      except:
-        return Response(
-            {
-                "message": "Product ID is required"
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )  
-      try:
-        varients_data=request.data.get('varients',[])
-      except:
-        return Response(
-            {
-                "message": "Varients data is required"
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )  
-      try:
-        seller_product=Product.objects.get(id=product_id)
-      except Product.DoesNotExist:
-        return Response(
-            {
-                    "message": "Product not found"
-                },
-            status=status.HTTP_404_NOT_FOUND
-            )
-      if request.user != seller_product.user:
+    def create(self, request):
+
+        product_id = request.data.get('product_id')
+
+        variants_data = request.data.get('variants', [])
+
+        print(request.data)
+        print(variants_data)
+
+        if not product_id:
+
             return Response(
-                {
-                    "message": "You are not authorized to create variants for this product"
-                },
-                status=status.HTTP_403_FORBIDDEN
+                {"message": "Product ID is required"},
+                status=status.HTTP_400_BAD_REQUEST
             )
-      data_obj=[]
-      with transaction.atomic():
-        for v in varients_data:
-          data_obj.append(variant(
-            product=seller_product,
-            color=v.get('color'),
-            size=v.get('size'),
-            price=v.get('price'),
-            offer=v.get('offer'),
-            stock=v.get('stock'),
-          
-          ))
+
+        try:
+
+            seller_product = Product.objects.get(id=product_id)
+
+        except Product.DoesNotExist:
+
+            return Response(
+                {"message": "Product not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        data_obj = []
+
+        with transaction.atomic():
+
+            for v in variants_data:
+
+                data_obj.append(
+
+                variant(
+
+                    product=seller_product,
+
+                    colors_id=v.get('colors'),
+
+                    sizes_id=v.get('sizes'),
+
+                    images=v.get('images'),
+
+                    price=v.get('price'),
+
+                    offer=v.get('offer'),
+
+                    stock=v.get('stock')
+
+                )
+            )
+
+        print(data_obj)
+
         variant.objects.bulk_create(data_obj)
+
         return Response(
             {
-                "message": "Variants created successfully",
-                "seller_product_id": seller_product.id
+                  "message": "Variants created successfully"
             },
             status=status.HTTP_201_CREATED
         )
-    
     def partial_update(self,request,pk):
       try:
         instance = variant.objects.get(id=pk)
@@ -200,9 +211,18 @@ class ProductVraientViewSet(viewsets.ModelViewSet):
           },
           status=status.HTTP_200_OK
       )
-
-      
     
+class ProductAndVariantListView(generics.ListAPIView):
+
+    queryset = Product.objects.all().prefetch_related('variant_set')
+
+    serializer_class = ProductSerializer
+
+    permission_classes = [AllowAny]
+
+
+
+
 class ProductDetailView(generics.RetrieveAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer

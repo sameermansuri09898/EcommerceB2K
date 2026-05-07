@@ -9,4 +9,9 @@ router.register('product',views.productViewSet, basename='product')
 router.register('variant',views.ProductVraientViewSet, basename='variant')
 
 
-urlpatterns = router.urls
+
+urlpatterns=[
+  path('productlist/',views.ProductAndVariantListView.as_view(),name='product_and_variant_list'),
+  
+]
+urlpatterns += router.urls

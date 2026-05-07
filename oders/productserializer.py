@@ -4,13 +4,14 @@ from .models import *
 class VarientProductSerializer(serializers.ModelSerializer):
     color_name=serializers.CharField(source='colors.color',read_only=True)
     size_name=serializers.CharField(source='sizes.size',read_only=True)
-    image_url = serializers.SerializerMethodField()
+    image_url = serializers.ImageField(source='images',read_only=True)
     final_price=serializers.SerializerMethodField()
     offer_price=serializers.SerializerMethodField()
     
     class Meta:
         model=variant
-        fields=['id','color','color_name','size','size_name','price','offer','stock','product','image_url','final_price','offer_price']  
+        fields=['id','color_name','size_name','price','offer','stock','product','image_url','final_price','offer_price','colors','sizes']  
+        read_only_fields = ['id','color_name','size_name','image_url','final_price','offer_price']
 
 
     def validate_stock(self,value):
@@ -30,24 +31,25 @@ class VarientProductSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Offer must be between 0 and 100")
         return value
 
-    def get_image_url(self, obj):
-     return [img.image.url for img in obj.product.images.all()]    
+     
 
         
     def get_final_price(self,obj):
         return obj.final_price()
     
-    def get_priceoffer(self,obj):
+    def get_offer_price(self,obj):
         return obj.offer_price() 
 
     def create(self,validated_data):
         return variant.objects.create(**validated_data)
 
 class ProductSerializer(serializers.ModelSerializer):
+    variant_set=VarientProductSerializer(many=True,read_only=True)
     class Meta:
         model = Product
-        fields = ['id', 'name', 'brand', 'description', 'category']
+        fields = ['id', 'name', 'brand', 'description', 'category','variant_set']
         read_only_fields = ['id']
+
 
     def validate_name(self,value):
         if len(value)<5:
