@@ -12,8 +12,12 @@ from sellerdash.services.cachepage import cache_page_decorators
 from sellerdash.permission import SellerPermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.utils.decorators import method_decorator
+from django.core.cache import cache
 
 class productViewSet(viewsets.ModelViewSet):
+    """
+    A simple ViewSet for viewing and editing products.
+    """
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
@@ -22,10 +26,18 @@ class productViewSet(viewsets.ModelViewSet):
 
    
     def list(self,request):
+      timeout=60*15
+      cache_key=f"cache_page:{request.get_full_path()}:{request.user.id}"
+      cached_response=cache.get(cache_key)
+      
+      if cached_response:
+        return Response(cached_response,status=status.HTTP_200_OK)  
+      
       data=self.get_queryset()
       serializer=self.get_serializer(data,many=True)
-      return Response(serializer.data)
-      
+      cache.set(cache_key,serializer.data,timeout)
+      return Response(serializer.data,status=status.HTTP_200_OK)  
+
     def create(self,request,*args,**kwargs):
       image=request.FILES.getlist('images')
       colors=request.data.getlist('colors')
@@ -116,4 +128,8 @@ class productViewSet(viewsets.ModelViewSet):
         instance_obj.delete()
       return Response({'message':'Product deleted successfully'},status=status.HTTP_200_OK)  
 
+
+
+
+  
 

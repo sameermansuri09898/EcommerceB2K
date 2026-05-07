@@ -22,7 +22,6 @@ def cache_page_decorators(timeout):
 
             response = func(self, request, *args, **kwargs)
 
-            # only cache successful responses
             if response.status_code == 200:
                 cache.set(cache_key, response.data, timeout)
 

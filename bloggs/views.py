@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from sellerdash.permission import SellerPermission
+
 class Blogview(APIView):
   permission_classes=[IsAuthenticated,SellerPermission]
   authentication_classes = [JWTAuthentication]
@@ -20,6 +21,7 @@ class Blogview(APIView):
       return Response({'message':'Product created successfully'},status=status.HTTP_201_CREATED)
     return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
+
   def delete(self,request,pk):
     try:
       data=Productbloggs.objects.get(pk=pk)
@@ -30,8 +32,13 @@ class Blogview(APIView):
     except Productbloggs.DoesNotExist:
       return Response({'message':'Product not found'},status=status.HTTP_404_NOT_FOUND)   
 
-
 class Retreaveproductbloggs(generics.RetrieveAPIView):
   queryset = Productbloggs.objects.all()
   serializer_class = ProductbloggsSerializer
 
+class ListBlog(APIView):
+    def get(self,request):
+        data=Productbloggs.objects.all()
+        serializer=ProductbloggsSerializer(data,many=True)
+        return Response(serializer.data)
+        
