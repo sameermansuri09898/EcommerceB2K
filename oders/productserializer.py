@@ -1,77 +1,85 @@
 from rest_framework import serializers
-from .models import Product,productimage,colorvarient,sizevarient
+from .models import *
 
-class ProductImageSerializer(serializers.ModelSerializer):
+class VarientProductSerializer(serializers.ModelSerializer):
+    color_name=serializers.CharField(source='colors.color',read_only=True)
+    size_name=serializers.CharField(source='sizes.size',read_only=True)
+    image_url = serializers.SerializerMethodField()
+    final_price=serializers.SerializerMethodField()
+    offer_price=serializers.SerializerMethodField()
+    
     class Meta:
-        model = productimage
-        fields = ['id', 'image']
-        read_only_fields = ['id']
-
-class ProductColorVarientSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = colorvarient
-        fields = ['id', 'color']
-        read_only_fields = ['id']
-
-class ProductSizeVarientSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = sizevarient
-        fields = ['id', 'size']
-        read_only_fields = ['id']
+        model=variant
+        fields=['id','color','color_name','size','size_name','price','offer','stock','product','image_url','final_price','offer_price']  
 
 
+    def validate_stock(self,value):
+        if value < 0:
+            raise serializers.ValidationError("Stock cannot be negative")
+        if value > 100:
+            raise serializers.ValidationError("Stock cannot be more than 100")
+        return value
 
+    def validate_price(self,value):
+        if value < 0:
+            raise serializers.ValidationError("Price cannot be negative")
+        return value
 
-class ProductSerializer(serializers.ModelSerializer):
-    images = ProductImageSerializer(many=True, read_only=True)
-    colors = ProductColorVarientSerializer(many=True, read_only=True)
-    sizes = ProductSizeVarientSerializer(many=True, read_only=True)
+    def validate_offer(self, value):
+        if value < 0 or value > 100:
+            raise serializers.ValidationError("Offer must be between 0 and 100")
+        return value
 
-    final_price = serializers.SerializerMethodField()
-    priceoffer = serializers.SerializerMethodField()
+    def get_image_url(self, obj):
+     return [img.image.url for img in obj.product.images.all()]    
 
-    class Meta:
-        model = Product
-        fields = ['id', 'name', 'price', 'stock', 'brand', 'description', 'category', 'images', 'colors', 'sizes', 'final_price', 'priceoffer','offer']
-        read_only_fields = ['id']
-
-    def validate(self, attrs):
-
-        if not attrs.get('price'):    
-            raise serializers.ValidationError("Price is required")
-        if not attrs.get('name'):
-            raise serializers.ValidationError("Name is required")  
-        if not attrs.get('brand'):
-            raise serializers.ValidationError("Brand is required")
-        if not attrs.get('description'):
-            raise serializers.ValidationError("Description is required")
-        if not attrs.get('category'):
-            raise serializers.ValidationError("Category is required")
-        if not attrs.get('stock'):
-            raise serializers.ValidationError("Stock is required")   
-            
-        if attrs.get('stock',0) <=0:
-            raise serializers.ValidationError("Stock must be greater than 0")
-        return attrs
-
+        
     def get_final_price(self,obj):
         return obj.final_price()
     
     def get_priceoffer(self,obj):
-        return obj.offer_price()
+        return obj.offer_price() 
+
+    def create(self,validated_data):
+        return variant.objects.create(**validated_data)
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'brand', 'description', 'category']
+        read_only_fields = ['id']
+
+    def validate_name(self,value):
+        if len(value)<5:
+            raise serializers.ValidationError("Name cannot be less than 5 characters")
+        return value   
+
+    def validate_brand(self,value):
+        if len(value)<3:
+            raise serializers.ValidationError("Brand cannot be less than 3 characters")
+        return value
+
+    def validate_description(self,value):
+        if len(value)<10:
+            raise serializers.ValidationError("Description cannot be less than 10 characters")
+        return value
+
+    def validate_category(self,value):
+        if len(value)<3:
+            raise serializers.ValidationError("Category cannot be less than 3 characters")
+        return value
+        
+    def create(self, validated_data):
+        product=Product.objects.create(**validated_data)
+        return product
+        
+
+
+   
 
  
 
-    def validate_offer(self,offer):
-        if offer <0 or offer >100:
-            raise serializers.ValidationError("Offer must be between 0 and 100")
-        if not offer:    
-            raise serializers.ValidationError("Offer is required")
-        return offer
     
-    def create(self,validated_data):
-        product=Product.objects.create(**validated_data)
-        return product
     
 
 
