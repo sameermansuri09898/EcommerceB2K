@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product,productimage,colorvarient,sizevarient,variant
+from .models import Product,colorvarient,sizevarient,variant,Addcart
 
 
 admin.site.register(Product)
@@ -14,3 +14,7 @@ class colorvarientAdmin(admin.ModelAdmin):
 @admin.register(sizevarient)
 class sizevarientAdmin(admin.ModelAdmin):
     list_display=['id','size']
+
+@admin.register(Addcart)
+class AddcartAdmin(admin.ModelAdmin):
+    list_display=['user','product_item','product_varient','total_price','discounted_price','amount_saved','quantity','created_at','updated_at','is_cart']

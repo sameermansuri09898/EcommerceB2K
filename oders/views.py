@@ -1,17 +1,21 @@
 from django.shortcuts import render
 from rest_framework import generics,status
 from rest_framework.response import Response
-from .models import Product,variant
+
+from .models import Product,variant,Addcart
 from .productserializer import ProductSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets
+
 from django.db import transaction
 from sellerdash.permission import SellerPermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.core.cache import cache
 from.productserializer import VarientProductSerializer
+from .cartseralizer import AddToCartSerializer
 from rest_framework.permissions import AllowAny
 from rest_framework import serializers
+from rest_framework.views import APIView
 
 class productViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
@@ -25,6 +29,7 @@ class productViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         product = serializer.save(user=request.user)
+        print("id is",product.id)
 
         return Response(
             {
@@ -127,29 +132,20 @@ class ProductVraientViewSet(viewsets.ModelViewSet):
             for v in variants_data:
 
                 data_obj.append(
-
-                variant(
-
-                    product=seller_product,
-
-                    colors_id=v.get('colors'),
-
-                    sizes_id=v.get('sizes'),
-
-                    images=v.get('images'),
-
-                    price=v.get('price'),
-
-                    offer=v.get('offer'),
-
-                    stock=v.get('stock')
-
-                )
+                    variant(
+                        seller=request.user,
+                        product=seller_product,
+                colors_id=v.get('colors'),
+                sizes_id=v.get('sizes'),
+                images=v.get('images'),
+                price=v.get('price'),
+                offer=v.get('offer'),
+                stock=v.get('stock')
             )
-
-        print(data_obj)
+        )
 
         variant.objects.bulk_create(data_obj)
+    
 
         return Response(
             {
@@ -157,6 +153,7 @@ class ProductVraientViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_201_CREATED
         )
+
     def partial_update(self,request,pk):
       try:
         instance = variant.objects.get(id=pk)
@@ -244,3 +241,93 @@ class Userproductlistview(generics.ListAPIView):
       cache.set(cache_key,serializer.data,timeout)
       return Response(serializer.data,status=status.HTTP_200_OK)
 
+
+class AddToCartView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication] 
+    def post(self,request):
+      product_id= int(request.data.get('product_item'))
+      variant_id= int(request.data.get('product_varient'))
+      quantity= int(request.data.get('quantity',1))
+
+      
+      serializer=AddToCartSerializer(data=request.data)
+      if not serializer.is_valid():
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+      try:
+        product=Product.objects.get(id=product_id)
+      except Product.DoesNotExist:
+        return Response(
+            {
+                "message": "Product not found"
+            },
+            status=status.HTTP_404_NOT_FOUND
+        )   
+      try:
+        product_variant=variant.objects.get(id=variant_id,product=product)
+      except variant.DoesNotExist:
+        return Response(
+            {
+                "message": "Variant not found"
+            },
+            status=status.HTTP_404_NOT_FOUND
+        )
+      
+      if product_variant.is_available==False:
+        return Response(
+            {
+                "message": "Stock is unavailable"
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+      if product_variant.stock<quantity:
+        return Response(
+            {
+                "message": "Stock is less than quantity"
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+      total_price=product_variant.final_price()*quantity
+      discounted_price=product_variant.offer_price()*quantity
+      amount_saved = (
+            product_variant.price - product_variant.offer_price()
+            ) * quantity    
+
+      cart_item=Addcart.objects.filter(user=request.user,product_item=product_id,product_varient=variant_id).first()
+      if cart_item:
+        cart_item.quantity+=quantity
+        cart_item.total_price+=total_price
+        cart_item.discounted_price+=discounted_price
+        cart_item.amount_saved+=amount_saved
+        cart_item.save()
+        return Response(
+            {
+                "message": "Updated cart",
+                "cart_id": cart_item.id
+            },
+            status=status.HTTP_200_OK
+        )
+      else:
+        Addcart.objects.create(
+            user=request.user.id,
+            product_item=product.id,
+            product_varient=product_variant.id,
+            quantity=quantity,
+            total_price=total_price,
+            discounted_price=discounted_price,
+            amount_saved=amount_saved,
+            is_cart=True
+        )
+        return Response(
+            {
+                "message": "Added to cart",
+                "cart_id": Addcart.objects.last().id
+            },
+            status=status.HTTP_201_CREATED
+        )
+      
+        
+       
+      
