@@ -221,19 +221,16 @@ class ProductAndVariantListView(generics.ListAPIView):
 
     permission_classes = [AllowAny]
 
-
-
-
 class ProductDetailView(generics.RetrieveAPIView):
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().prefetch_related('variant_set')
     serializer_class = ProductSerializer
+    permission_classes = [AllowAny]
  
 class Userproductlistview(generics.ListAPIView):
     
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication] 
 
-    
     def get(self,request):
       timeout=60*15
       cache_key=f"cache_page:{request.get_full_path()}:{request.user.id}"
@@ -246,3 +243,4 @@ class Userproductlistview(generics.ListAPIView):
       serializer=self.get_serializer(data,many=True)
       cache.set(cache_key,serializer.data,timeout)
       return Response(serializer.data,status=status.HTTP_200_OK)
+
