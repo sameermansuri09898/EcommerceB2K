@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Menu, X, ShoppingCart, User, Search } from "lucide-react";
+import { Menu, X, ShoppingCart, User, Search, Heart } from "lucide-react";
 import Asso from "./asso";
 
 const Nav = () => {
@@ -63,14 +63,14 @@ const Nav = () => {
           {/* Right Icons */}
           <div className="hidden md:flex items-center gap-5">
 
-            <button className="hover:text-indigo-600 transition">
+            <button className="hover:text-indigo-600 transition cursor-pointer">
               <User size={22} />
             </button>
-            <button className="hover:text-indigo-600 transition">
-              <Search size={22} />
+            <button className="hover:text-red-500 transition cursor-pointer">
+              <Heart size={22} />
             </button>
 
-            <button className="relative hover:text-indigo-600 transition">
+            <button className="relative hover:text-indigo-600 transition cursor-pointer">
               <ShoppingCart size={22} />
 
               <span className="absolute -top-2 -right-2 bg-indigo-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
@@ -125,6 +125,23 @@ const Nav = () => {
           </div>
         )}
       </header>
+
+      <div className="w-full w-full mx-auto flex items-center border border-gray-300 rounded-full overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 bg-white shadow-lg mt-2">
+
+        <input
+          type="text"
+          placeholder="Search products, brands and more..."
+          className="w-full px-5 py-3 text-sm outline-none"
+        />
+
+        <button className="bg-indigo-600 text-white px-6 py-3 hover:bg-indigo-700 transition">
+          Search
+        </button>
+
+      </div>
+
+
+
     </div>
   );
 };
