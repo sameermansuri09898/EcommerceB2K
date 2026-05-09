@@ -16,7 +16,7 @@ class AddToCartSerializer(serializers.ModelSerializer):
     varient_size = serializers.CharField(
         source='product_varient.sizes.size',
         read_only=True
-    )
+    ) 
 
     image = serializers.ImageField(
         source='product_varient.image',
