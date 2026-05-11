@@ -16,6 +16,8 @@ from .cartseralizer import AddToCartSerializer
 from rest_framework.permissions import AllowAny
 from rest_framework import serializers
 from rest_framework.views import APIView
+from .cartseralizer import AddToCartSerializer
+
 
 class productViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
@@ -329,5 +331,96 @@ class AddToCartView(APIView):
         )
       
         
-       
-      
+class Viewcart(APIView):
+  permission_classes=[IsAuthenticated]
+  authentication_classes=[JWTAuthentication]
+  def get(self,request):
+    timeout=60*15
+    cache_key=f"cache_page:{request.get_full_path()}:{request.user.id}"
+    cached_response=cache.get(cache_key)
+    if cached_response:
+      return Response(cached_response,status=status.HTTP_200_OK)  
+    cart=Addcart.objects.filter(user=request.user,is_cart=True)
+    serializer=AddToCartSerializer(cart,many=True)
+    cache.set(cache_key,serializer.data,timeout)
+    return Response(     
+        {
+            "message": "Cart",
+            "cart": serializer.data
+        },
+        status=status.HTTP_200_OK
+    )
+
+  def update(self,request):
+    cart_id=int(request.data.get('cart_id'))
+    quantity=int(request.data.get('quantity'))
+    if quantity<=0:
+      Addcart.objects.filter(id=cart_id).delete()
+      return Response(
+          {
+              "message": "Cart deleted successfully"
+          },
+          status=status.HTTP_200_OK
+      )      
+    try:
+      cart=Addcart.objects.get(id=cart_id)
+    except Addcart.DoesNotExist:
+      return Response(
+          {
+              "message": "Cart not found"
+          },
+          status=status.HTTP_404_NOT_FOUND
+      )
+    if cart.product_item.user != request.user:
+      return Response(
+          {
+              "message": "You are not authorized to update this cart"
+          },
+          status=status.HTTP_403_FORBIDDEN
+      )
+    if cart.product_varient.stock<quantity:
+      return Response(
+          {
+              "message": "Stock is less than quantity"
+          },
+          status=status.HTTP_400_BAD_REQUEST
+      )    
+    cart.quantity+=quantity
+    cart.total_price+=cart.product_varient.final_price()*quantity
+    cart.discounted_price+=cart.product_varient.offer_price()*quantity
+    cart.amount_saved+=(cart.product_varient.price-cart.product_varient.offer_price())*quantity
+    cart.save()
+    return Response(
+        {
+            "message": "Updated cart",
+            "cart_id": cart.id
+        },
+        status=status.HTTP_200_OK
+    ) 
+
+    def delete(self,request):
+        cart_id=request.data.get('cart_id')
+        try:
+          cart=Addcart.objects.get(id=cart_id)
+        except Addcart.DoesNotExist:
+          return Response(
+              {
+                  "message": "Cart not found"
+              },
+              status=status.HTTP_404_NOT_FOUND
+          )
+        if cart.product_item.user != request.user:
+          return Response(
+              {
+                  "message": "You are not authorized to delete this cart"
+              },
+              status=status.HTTP_403_FORBIDDEN
+          )
+        cart.delete()
+        return Response(
+            {
+                "message": "Cart deleted successfully"
+            },
+            status=status.HTTP_200_OK
+        )
+        
