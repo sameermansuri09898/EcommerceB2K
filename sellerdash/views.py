@@ -13,6 +13,8 @@ from rest_framework.permissions import IsAuthenticated
 from .serializer import sellerserializer
 from Account.models import Otp
 from .Successselleremail import send_wellcome_email
+from oders.models import Product,variant
+from oders.productserializer import ProductSerializer  
 
 
 class selleaccount(APIView):
@@ -70,3 +72,19 @@ class resendotp(APIView):
         seller.save()
         return Response({"message":"Otp sent successfully"}, status=status.HTTP_201_CREATED)
       return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+
+# --------------------------get seller products---------------
+
+
+
+
+class GetSellerProduct(APIView):
+  permission_classes=[IsAuthenticated,]
+  authentication_classes=[JWTAuthentication]
+  def get(self,request):
+    product=Product.objects.filter(user=request.user).prefetch_related("variants_set")
+    serializer=ProductSerializer(product,many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
