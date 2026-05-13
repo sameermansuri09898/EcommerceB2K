@@ -6,6 +6,7 @@ export default function ProductCards() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+
   useEffect(() => {
 
     const controller = new AbortController();
@@ -71,9 +72,8 @@ export default function ProductCards() {
             {user.name}
           </li>
         ))}
-        {console.log(users)}
-
       </ul>
     </div>
   );
+
 }
