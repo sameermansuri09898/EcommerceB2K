@@ -120,10 +120,7 @@ REST_FRAMEWORK = {
 }
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",
-    "http://localhost:8080",
-    "http://[IP_ADDRESS]",
-    "http://[IP_ADDRESS]",
+     "http://localhost:5173",
 ]
 
 # Password validation
