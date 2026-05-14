@@ -175,11 +175,13 @@ export default function ProductCards() {
 
                       <button
                         key={variant.id}
+                        // {console.log(variant.id)}
                         onClick={() =>
                           handleVariantChange(
                             user.id,
                             variant
                           )
+
                         }
                         className={`
                           px-3 py-2 rounded-lg border transition

@@ -47,7 +47,7 @@ class ProductSerializer(serializers.ModelSerializer):
     variant_set=VarientProductSerializer(many=True,read_only=True)
     class Meta:
         model = Product
-        fields = ['id', 'name', 'brand', 'description', 'category','variant_set']
+        fields = ['id', 'name', 'brand', 'description', 'category','product_image','variant_set']
         read_only_fields = ['id']
 
 

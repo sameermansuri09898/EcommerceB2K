@@ -214,7 +214,7 @@ class ProductVraientViewSet(viewsets.ModelViewSet):
     
 class ProductAndVariantListView(generics.ListAPIView):
 
-    queryset = Product.objects.all().prefetch_related('variant_set')
+    queryset = Product.objects.all()
 
     serializer_class = ProductSerializer
 
@@ -303,6 +303,7 @@ class AddToCartView(APIView):
         cart_item.total_price+=total_price
         cart_item.discounted_price+=discounted_price
         cart_item.amount_saved+=amount_saved
+        cart_item.images=product_variant.images
         cart_item.save()
         return Response(
             {
@@ -320,6 +321,7 @@ class AddToCartView(APIView):
             total_price=total_price,
             discounted_price=discounted_price,
             amount_saved=amount_saved,
+            images=product_variant.images,
             is_cart=True
         )
         return Response(
@@ -329,8 +331,7 @@ class AddToCartView(APIView):
             },
             status=status.HTTP_201_CREATED
         )
-      
-        
+    
 class Viewcart(APIView):
   permission_classes=[IsAuthenticated]
   authentication_classes=[JWTAuthentication]
@@ -354,6 +355,7 @@ class Viewcart(APIView):
   def update(self,request):
     cart_id=int(request.data.get('cart_id'))
     quantity=int(request.data.get('quantity'))
+    images=request.FILES.get('images')
     if quantity<=0:
       Addcart.objects.filter(id=cart_id).delete()
       return Response(
@@ -389,6 +391,7 @@ class Viewcart(APIView):
     cart.total_price+=cart.product_varient.final_price()*quantity
     cart.discounted_price+=cart.product_varient.offer_price()*quantity
     cart.amount_saved+=(cart.product_varient.price-cart.product_varient.offer_price())*quantity
+    cart.images=images
     cart.save()
     return Response(
         {
@@ -398,29 +401,28 @@ class Viewcart(APIView):
         status=status.HTTP_200_OK
     ) 
 
-    def delete(self,request):
-        cart_id=request.data.get('cart_id')
-        try:
-          cart=Addcart.objects.get(id=cart_id)
-        except Addcart.DoesNotExist:
-          return Response(
-              {
-                  "message": "Cart not found"
-              },
-              status=status.HTTP_404_NOT_FOUND
-          )
-        if cart.product_item.user != request.user:
-          return Response(
-              {
-                  "message": "You are not authorized to delete this cart"
-              },
-              status=status.HTTP_403_FORBIDDEN
-          )
-        cart.delete()
-        return Response(
-            {
-                "message": "Cart deleted successfully"
-            },
-            status=status.HTTP_200_OK
-        )
-        
+  def delete(self,request):
+    cart_id=request.data.get('cart_id')
+    try:
+      cart=Addcart.objects.get(id=cart_id)
+    except Addcart.DoesNotExist:
+      return Response(
+          {
+              "message": "Cart not found"
+          },
+          status=status.HTTP_404_NOT_FOUND
+      )
+    if cart.product_item.user != request.user:
+      return Response(
+          {
+              "message": "You are not authorized to delete this cart"
+          },
+          status=status.HTTP_403_FORBIDDEN
+      )
+    cart.delete()
+    return Response(
+        {
+            "message": "Cart deleted successfully"
+        },
+        status=status.HTTP_200_OK
+    )

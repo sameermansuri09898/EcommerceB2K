@@ -17,4 +17,6 @@ class sizevarientAdmin(admin.ModelAdmin):
 
 @admin.register(Addcart)
 class AddcartAdmin(admin.ModelAdmin):
-    list_display=['user','product_item','product_varient','total_price','discounted_price','amount_saved','quantity','created_at','updated_at','is_cart']
+    list_display=['id','user','product_item','product_varient','total_price','discounted_price','amount_saved','quantity','created_at','updated_at','is_cart']
+    list_filter=['is_cart','created_at','updated_at']
+    search_fields=['user__username','product_item__name','product_varient__colors__color','product_varient__sizes__size']

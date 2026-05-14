@@ -17,6 +17,8 @@ urlpatterns=[
   path('viewcart/',views.Viewcart.as_view(),name='viewcart'),
   path('updatecart/',views.Viewcart.as_view(),name='updatecart'),
   path('deletecart/',views.Viewcart.as_view(),name='deletecart'), 
+  path('Retreave_product/<int:pk>/', views.ProductDetailView.as_view(), name='get_cart_details'),
+
   
 ]
 urlpatterns += router.urls

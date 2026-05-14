@@ -6,12 +6,9 @@ const Nav = () => {
   const [mobileMenu, setMobileMenu] = useState(false);
 
   return (
-    <div className="bg-gray-100 min-h-screen w-full overflow-x-hidden">
+    <div className="bg-gray-100  w-full overflow-x-hidden">
 
-      {/* Top Bar */}
-      <div className="bg-indigo-600 text-white font-semibold text-center py-2 text-sm px-3">
-        You Are Away $30 from Free Shipping 🚚
-      </div>
+
 
       {/* Navbar */}
       <header className="bg-white shadow-md sticky top-0 z-50">

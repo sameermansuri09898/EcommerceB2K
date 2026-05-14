@@ -9,7 +9,7 @@ class AddToCartSerializer(serializers.ModelSerializer):
     )
 
     varient_color = serializers.CharField(
-        source='product_varient.colors.color',
+        source='product_varient.colors.color',  
         read_only=True
     )
 
@@ -19,7 +19,7 @@ class AddToCartSerializer(serializers.ModelSerializer):
     ) 
 
     image = serializers.ImageField(
-        source='product_varient.image',
+        source='product_varient.images',
         read_only=True
     )
 

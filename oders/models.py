@@ -10,6 +10,7 @@ class Product(models.Model):
     brand=models.CharField(max_length=100)
     description=models.TextField()
     category=models.CharField(max_length=100,default="other")
+    product_image=models.ImageField(upload_to='product_images/',default="")
     created_at = models.DateTimeField(auto_now_add=True) 
     updated_at = models.DateTimeField(auto_now=True) 
 
@@ -45,8 +46,7 @@ class variant(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     offer=models.DecimalField(max_digits=10, decimal_places=2)
     is_available=models.BooleanField(default=True)
-    # images=models.ImageField(upload_to='variant_images/')
-    images=models.URLField(default="",blank=True,null=True)
+    images=models.ImageField(upload_to='variant_images/',default="")
     
 
 
