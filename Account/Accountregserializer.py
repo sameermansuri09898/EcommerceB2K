@@ -12,7 +12,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
         extra_kwargs = {
             'password': {'write_only': True},
-            'email': {'unique': True}
+        
         }
 
     def validate(self, attrs):
