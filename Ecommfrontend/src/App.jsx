@@ -9,6 +9,7 @@ import ProductDetails from "./components/product/product";
 
 import RegisterForm from "./components/credentials/register";
 import VerifyOTP from "./components/credentials/verifyemail";
+import Login from "./components/credentials/login";
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="/product" element={<ProductDetails />} />
 
         <Route path="/register" element={<RegisterForm />} />
+        <Route path="/login" element={<Login />} />
 
         <Route path="/verify-otp" element={<VerifyOTP />} />
 

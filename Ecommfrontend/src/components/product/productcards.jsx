@@ -1,15 +1,14 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-
-
 
 export default function ProductCards() {
 
   const [users, setUsers] = useState([]);
+
   const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState(null);
 
-  // per product selected variant
+  // selected variants
   const [selectedVariants, setSelectedVariants] = useState({});
 
   useEffect(() => {
@@ -19,6 +18,7 @@ export default function ProductCards() {
     const fetchProducts = async () => {
 
       setLoading(true);
+
       setError(null);
 
       try {
@@ -42,7 +42,7 @@ export default function ProductCards() {
 
         setUsers(data);
 
-        // default variant set
+        // default variant
         const defaults = {};
 
         data.forEach((product) => {
@@ -68,7 +68,7 @@ export default function ProductCards() {
 
   }, []);
 
-  // variant change
+  // change variant
   const handleVariantChange = (productId, variant) => {
 
     setSelectedVariants((prev) => ({
@@ -77,31 +77,49 @@ export default function ProductCards() {
     }));
   };
 
+  // loading
   if (loading) {
     return (
-      <div className="text-center mt-20 text-2xl font-bold">
-        Loading...
+      <div className="min-h-screen flex justify-center items-center bg-gray-100">
+        <h1 className="text-xl md:text-3xl font-bold">
+          Loading...
+        </h1>
       </div>
     );
   }
 
+  // error
   if (error) {
     return (
-      <div className="text-center mt-20 text-red-500 text-xl">
-        Error: {error}
+      <div className="min-h-screen flex justify-center items-center bg-gray-100">
+        <h1 className="text-red-500 text-lg md:text-2xl font-semibold">
+          Error: {error}
+        </h1>
       </div>
     );
   }
 
   return (
 
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-gray-100 p-3 md:p-6">
 
-      <h1 className="text-4xl font-bold mb-8">
-        Products
-      </h1>
+      {/* heading */}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="flex items-center justify-between mb-5 md:mb-8">
+
+        <h1 className="text-2xl md:text-4xl font-bold">
+          Products
+        </h1>
+
+        <button className="bg-black text-white px-4 py-2 rounded-xl text-sm md:text-base">
+          Filter
+        </button>
+
+      </div>
+
+      {/* grid */}
+
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
 
         {users.map((user) => {
 
@@ -112,63 +130,73 @@ export default function ProductCards() {
 
             <div
               key={user.id}
-              className="bg-white rounded-2xl shadow-md hover:shadow-xl transition overflow-hidden"
+              className="bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-300 overflow-hidden group"
             >
 
-              {/* IMAGE */}
+              {/* image */}
 
-              <img
-                src={
-                  selectedVariant?.image_url ||
-                  "https://via.placeholder.com/300"
-                }
-                alt={user.name}
-                className="w-full h-64 object-cover"
-              />
+              <div className="overflow-hidden">
 
-              {/* CONTENT */}
+                <img
+                  src={
+                    selectedVariant?.image_url ||
+                    "https://via.placeholder.com/300"
+                  }
+                  alt={user.name}
+                  className="w-full h-40 sm:h-52 md:h-56 object-cover group-hover:scale-105 transition duration-300"
+                />
 
-              <div className="p-4">
+              </div>
 
-                <h2 className="text-xl font-bold">
+              {/* content */}
+
+              <div className="p-3 md:p-4">
+
+                {/* name */}
+
+                <h2 className="text-sm md:text-lg font-bold line-clamp-1">
                   {user.name}
                 </h2>
 
-                <p className="text-gray-500">
+                {/* brand */}
+
+                <p className="text-xs md:text-sm text-gray-500 mt-1">
                   {user.brand}
                 </p>
 
-                <p className="text-sm text-gray-400">
+                {/* category */}
+
+                <p className="text-[11px] md:text-xs text-gray-400">
                   {user.category}
                 </p>
 
-                {/* PRICE */}
+                {/* price */}
 
-                <div className="mt-4">
+                <div className="mt-3">
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
 
-                    <span className="text-2xl font-bold text-green-600">
+                    <span className="text-lg md:text-2xl font-bold text-green-600">
                       ₹{selectedVariant?.final_price}
                     </span>
 
-                    <span className="line-through text-gray-400">
+                    <span className="line-through text-xs md:text-sm text-gray-400">
                       ₹{selectedVariant?.price}
                     </span>
 
                   </div>
 
-                  <p className="text-red-500 text-sm font-medium">
+                  <p className="text-red-500 text-xs font-semibold mt-1">
                     {selectedVariant?.offer}% OFF
                   </p>
 
                 </div>
 
-                {/* COLORS */}
+                {/* colors */}
 
-                <div className="mt-5">
+                <div className="mt-4">
 
-                  <h3 className="font-semibold mb-2">
+                  <h3 className="font-semibold text-xs md:text-sm mb-2">
                     Colors
                   </h3>
 
@@ -178,16 +206,14 @@ export default function ProductCards() {
 
                       <button
                         key={variant.id}
-                        // {console.log(variant.id)}
                         onClick={() =>
                           handleVariantChange(
                             user.id,
                             variant
                           )
-
                         }
                         className={`
-                          px-3 py-2 rounded-lg border transition
+                          px-2 py-1 text-xs rounded-lg border transition
                           ${selectedVariant?.id === variant.id
                             ? "bg-black text-white border-black"
                             : "border-gray-300 hover:border-black"
@@ -203,44 +229,38 @@ export default function ProductCards() {
 
                 </div>
 
-                {/* SIZE */}
+                {/* size + stock */}
 
-                <div className="mt-4">
+                <div className="flex items-center justify-between mt-4">
 
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs md:text-sm text-gray-500">
                     Size:
-                    <span className="font-bold ml-2">
+                    <span className="font-bold ml-1">
                       {selectedVariant?.size_name}
                     </span>
                   </p>
 
-                </div>
-
-                {/* STOCK */}
-
-                <div className="mt-2">
-
                   {selectedVariant?.stock > 0 ? (
-                    <p className="text-green-600 text-sm">
+                    <p className="text-green-600 text-xs font-medium">
                       In Stock
                     </p>
                   ) : (
-                    <p className="text-red-500 text-sm">
-                      Out of Stock
+                    <p className="text-red-500 text-xs font-medium">
+                      Out
                     </p>
                   )}
 
                 </div>
 
-                {/* BUTTONS */}
+                {/* buttons */}
 
-                <div className="flex gap-3 mt-5">
+                <div className="grid grid-cols-2 gap-2 mt-4">
 
-                  <button className="flex-1 bg-yellow-400 hover:bg-yellow-500 py-3 rounded-xl font-semibold transition">
-                    Add to Cart
+                  <button className="bg-yellow-400 hover:bg-yellow-500 py-2 rounded-xl font-semibold transition text-xs md:text-sm">
+                    Cart
                   </button>
 
-                  <button className="flex-1 bg-pink-500 hover:bg-pink-600 text-white py-3 rounded-xl font-semibold transition">
+                  <button className="bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-xl font-semibold transition text-xs md:text-sm">
                     Wishlist
                   </button>
 
