@@ -81,7 +81,7 @@ export default function ProductCards() {
   if (loading) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-100">
-        <h1 className="text-xl md:text-3xl font-bold">
+        <h1 className="text-2xl md:text-3xl font-bold">
           Loading...
         </h1>
       </div>
@@ -111,7 +111,7 @@ export default function ProductCards() {
           Products
         </h1>
 
-        <button className="bg-black text-white px-4 py-2 rounded-xl text-sm md:text-base">
+        <button className="bg-black text-white px-4 py-2 rounded-xl text-sm md:text-base hover:bg-gray-800 transition">
           Filter
         </button>
 
@@ -135,7 +135,7 @@ export default function ProductCards() {
 
               {/* image */}
 
-              <div className="overflow-hidden">
+              <div className="w-full h-44 sm:h-52 md:h-60 bg-white flex items-center justify-center p-2 overflow-hidden">
 
                 <img
                   src={
@@ -143,7 +143,7 @@ export default function ProductCards() {
                     "https://via.placeholder.com/300"
                   }
                   alt={user.name}
-                  className="w-full h-40 sm:h-52 md:h-56 object-cover group-hover:scale-105 transition duration-300"
+                  className="h-full w-full object-contain mix-blend-multiply group-hover:scale-105 transition duration-300"
                 />
 
               </div>
@@ -257,7 +257,7 @@ export default function ProductCards() {
                 <div className="grid grid-cols-2 gap-2 mt-4">
 
                   <button className="bg-yellow-400 hover:bg-yellow-500 py-2 rounded-xl font-semibold transition text-xs md:text-sm">
-                    Cart
+                    Add Cart
                   </button>
 
                   <button className="bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-xl font-semibold transition text-xs md:text-sm">

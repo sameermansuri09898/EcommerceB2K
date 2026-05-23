@@ -426,3 +426,18 @@ class Viewcart(APIView):
         },
         status=status.HTTP_200_OK
     )
+
+class OfferOrders(APIView):
+
+    def get(self, request):
+
+        # data = Product.objects.filter(
+        #     variant_set__offer__gte=50
+        # ).distinct()
+
+        # or this reduce db query
+        data = Product.objects.prefetch_related('variant_set').filter(variant_set__offer__gte=50).distinct()
+
+        serializer = ProductSerializer(data, many=True)
+
+        return Response(serializer.data)

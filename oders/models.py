@@ -31,6 +31,7 @@ class colorvarient(models.Model):
     def __str__(self):
         return self.color
 
+
 class sizevarient(models.Model):
     size=models.CharField(max_length=100,unique=True)
 
@@ -38,7 +39,7 @@ class sizevarient(models.Model):
         return self.size        
 
 class variant(models.Model):
-    seller=models.ForeignKey(CustomUser, on_delete=models.CASCADE,default=1)
+    seller=models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     product=models.ForeignKey(Product, on_delete=models.CASCADE,related_name='variant_set')
     colors=models.ForeignKey(colorvarient, on_delete=models.CASCADE)
     sizes=models.ForeignKey(sizevarient, on_delete=models.CASCADE)
@@ -47,6 +48,9 @@ class variant(models.Model):
     offer=models.DecimalField(max_digits=10, decimal_places=2)
     is_available=models.BooleanField(default=True)
     images=models.ImageField(upload_to='variant_images/',default="")
+    
+    class Meta:
+        unique_together = ['product', 'colors', 'sizes']
     
 
 

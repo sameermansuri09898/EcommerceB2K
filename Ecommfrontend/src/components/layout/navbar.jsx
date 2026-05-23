@@ -6,7 +6,7 @@ const Nav = () => {
   const [mobileMenu, setMobileMenu] = useState(false);
 
   return (
-    <div className="bg-gray-100  w-full overflow-x-hidden">
+    <div className="bg-gray-100  w-full overflow-x-hidden mb-3">
 
 
 
