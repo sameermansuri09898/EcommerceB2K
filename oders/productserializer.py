@@ -44,10 +44,11 @@ class VarientProductSerializer(serializers.ModelSerializer):
         return variant.objects.create(**validated_data)
 
 class ProductSerializer(serializers.ModelSerializer):
+    categorie_name=serializers.CharField(source='categorie.color',read_only=True)
     variant_set=VarientProductSerializer(many=True,read_only=True)
     class Meta:
         model = Product
-        fields = ['id', 'name', 'brand', 'description', 'category','product_image','variant_set']
+        fields = ['id', 'name', 'brand', 'description', 'categorie_name','product_image','variant_set','categorie']
         read_only_fields = ['id']
 
 

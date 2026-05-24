@@ -3,13 +3,21 @@ from Account.models import CustomUser
 from django.conf import settings
 from django.utils.crypto import get_random_string
 
+class Categoriesvarient(models.Model):
+
+    categorie=models.CharField(max_length=100,unique=True)
+
+    def __str__(self):
+        return self.categorie
+    
+    
 class Product(models.Model):
     user=models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     name = models.CharField(max_length=255,default="")
 
     brand=models.CharField(max_length=100)
     description=models.TextField()
-    category=models.CharField(max_length=100,default="other")
+    category=models.ForeignKey(Categoriesvarient,on_delete=models.CASCADE)
     product_image=models.ImageField(upload_to='product_images/',default="")
     created_at = models.DateTimeField(auto_now_add=True) 
     updated_at = models.DateTimeField(auto_now=True) 
@@ -30,6 +38,7 @@ class colorvarient(models.Model):
 
     def __str__(self):
         return self.color
+
 
 
 class sizevarient(models.Model):
