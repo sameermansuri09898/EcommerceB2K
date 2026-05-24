@@ -11,6 +11,7 @@ import RegisterForm from "./components/credentials/register";
 import VerifyOTP from "./components/credentials/verifyemail";
 import Login from "./components/credentials/login";
 import OfferProducts from './components/banners/offerpr'
+import Cart from './components/odders/cart'
 
 export default function App() {
   return (
@@ -25,15 +26,17 @@ export default function App() {
         <Route path="/product" element={<ProductDetails />} />
 
         <Route path="/register" element={<RegisterForm />} />
+
         <Route path="/login" element={<Login />} />
+
         <Route path="/OfferProducts" element={<OfferProducts />} />
 
         <Route path="/verify-otp" element={<VerifyOTP />} />
 
+        <Route path="/Cart" element={<Cart />} />
+
       </Routes>
-
-      <Footer />
-
+<Footer/>
     </BrowserRouter>
   );
 }

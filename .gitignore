@@ -23,7 +23,9 @@ staticfiles/
 # Environment variables
 .env
 .env.*
-
+sizes.csv
+categories.csv
+colours.csv
 # VS Code
 .vscode/
 
