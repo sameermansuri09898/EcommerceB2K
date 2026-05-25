@@ -2,8 +2,8 @@ from django.shortcuts import render
 from rest_framework import generics,status
 from rest_framework.response import Response
 
-from .models import Product,variant,Addcart
-from .productserializer import ProductSerializer
+from .models import Product,variant,Addcart,Categoriesvarient
+from .productserializer import ProductSerializer,catdataSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets
 
@@ -16,6 +16,7 @@ from .cartseralizer import AddToCartSerializer
 from rest_framework.permissions import AllowAny
 from rest_framework import serializers
 from rest_framework.views import APIView
+from django.db.models import Prefetch
 from .cartseralizer import AddToCartSerializer
 
 
@@ -431,13 +432,18 @@ class OfferOrders(APIView):
 
     def get(self, request):
 
-        # data = Product.objects.filter(
-        #     variant_set__offer__gte=50
-        # ).distinct()
+        data = Product.objects.prefetch_related(
+            "variant_set"
+        ).filter(
+            variant_set__offer__gt=50
+        ).distinct()
 
-        # or this reduce db query
-        data = Product.objects.prefetch_related('variant_set').filter(variant_set__offer__gte=50).distinct()
+        serial = ProductSerializer(data, many=True)
 
-        serializer = ProductSerializer(data, many=True)
-
-        return Response(serializer.data)
+        return Response(serial.data)
+    
+class Categoriesdata(APIView):
+   def get(self,request):
+      data=Categoriesvarient.objects.all().order_by('id')
+      serializer=catdataSerializer(data,many=True)
+      return Response(serializer.data)

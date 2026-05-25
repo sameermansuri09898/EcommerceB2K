@@ -2,11 +2,15 @@ from django.contrib import admin
 from .models import Product,colorvarient,sizevarient,variant,Addcart,Categoriesvarient
 
 
-admin.site.register(Product)
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    list_display=['id','name']
+    search_fields=['name','brand']
 
 @admin.register(variant)
 class variantAdmin(admin.ModelAdmin):
-    list_display=['product','colors','sizes','stock','price','offer','is_available','images']
+    list_display=['seller','product','colors','sizes','stock','price','offer','is_available','images']
+    search_fields=['product']
 @admin.register(colorvarient)
 class colorvarientAdmin(admin.ModelAdmin):
     list_display=['id','color']

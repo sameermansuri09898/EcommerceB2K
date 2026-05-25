@@ -167,7 +167,7 @@ const Nav = () => {
                           My Profile
                         </button>
 
-                        <button onClick={() => navigate('/register')}
+                        <button onClick={() => navigate('/BecomeSeller')}
                           className="
                             flex items-center gap-3
                             px-4 py-3 rounded-xl
@@ -249,7 +249,7 @@ const Nav = () => {
 
               <ShoppingCart size={22} />
 
-              <button onClick={() => navigate('/Cart')}
+              <span
                 className="
                   absolute -top-2 -right-2
                   bg-indigo-600 text-white
@@ -259,7 +259,7 @@ const Nav = () => {
                 "
               >
                 2
-              </button>
+              </span>
 
             </button>
           </div>
@@ -344,7 +344,7 @@ const Nav = () => {
       </header>
 
       {/* SEARCH BAR */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-5 mt-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-5 mt-2 pb-1">
 
         <div
           className="

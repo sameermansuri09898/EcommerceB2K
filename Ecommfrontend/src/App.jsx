@@ -10,14 +10,18 @@ import ProductDetails from "./components/product/product";
 import RegisterForm from "./components/credentials/register";
 import VerifyOTP from "./components/credentials/verifyemail";
 import Login from "./components/credentials/login";
+
 import OfferProducts from './components/banners/offerpr'
 import Cart from './components/odders/cart'
+import Categories from './components/categories/swipercat'
+
 
 export default function App() {
   return (
     <BrowserRouter>
 
       <Nav />
+      <Categories/>
       <OfferProducts/>
       <Routes>
 
@@ -28,6 +32,7 @@ export default function App() {
         <Route path="/register" element={<RegisterForm />} />
 
         <Route path="/login" element={<Login />} />
+
 
         <Route path="/OfferProducts" element={<OfferProducts />} />
 

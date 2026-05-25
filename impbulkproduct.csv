@@ -1,0 +1,126 @@
+# management/commands/generate_fake_products.py
+
+import random
+import requests
+from django.core.files.base import ContentFile
+
+from faker import Faker
+from django.core.management.base import BaseCommand
+
+from app.models import (
+    Product,
+    Variant,
+    Category,
+    Size,
+    Color
+)
+
+
+class Command(BaseCommand):
+
+    help = "Generate Fake Ecommerce Products With Images"
+
+    def handle(self, *args, **kwargs):
+
+        fake = Faker()
+
+        categories = list(Category.objects.all())
+        sizes = list(Size.objects.all())
+        colors = list(Color.objects.all())
+
+        if not categories or not sizes or not colors:
+
+            self.stdout.write(
+                self.style.ERROR(
+                    "Please add categories, sizes and colors first"
+                )
+            )
+            return
+
+        brands = [
+            "Nike",
+            "Puma",
+            "Boat",
+            "Noise",
+            "Samsung",
+            "Adidas"
+        ]
+
+        # FREE RANDOM PRODUCT IMAGES
+        images = [
+            "https://picsum.photos/400/400",
+            "https://source.unsplash.com/400x400/?watch",
+            "https://source.unsplash.com/400x400/?shoes",
+            "https://source.unsplash.com/400x400/?fashion",
+            "https://source.unsplash.com/400x400/?electronics"
+        ]
+
+        for i in range(1000):
+
+            category = random.choice(categories)
+
+            product = Product.objects.create(
+                name=fake.sentence(nb_words=3),
+                brand=random.choice(brands),
+                description=fake.text(max_nb_chars=150),
+                categorie=category
+            )
+
+            # PRODUCT IMAGE
+            try:
+
+                image_url = random.choice(images)
+
+                response = requests.get(image_url)
+
+                if response.status_code == 200:
+
+                    product.product_image.save(
+                        f"product_{i}.jpg",
+                        ContentFile(response.content),
+                        save=True
+                    )
+
+            except Exception as e:
+                print("Product Image Error:", e)
+
+            # CREATE 2-5 VARIANTS
+            for j in range(random.randint(2, 5)):
+
+                price = random.randint(500, 5000)
+
+                offer = random.randint(5, 60)
+
+                variant = Variant.objects.create(
+                user=14
+                    product=product,
+                    size=random.choice(sizes),
+                    color=random.choice(colors),
+                    price=price,
+                    offer=offer,
+                    stock=random.randint(1, 20)
+                )
+
+                # VARIANT IMAGE
+                try:
+
+                    image_url = random.choice(images)
+
+                    response = requests.get(image_url)
+
+                    if response.status_code == 200:
+
+                        variant.image.save(
+                            f"variant_{i}_{j}.jpg",
+                            ContentFile(response.content),
+                            save=True
+                        )
+
+                except Exception as e:
+                    print("Variant Image Error:", e)
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                "1000 Fake Ecommerce Products Created"
+            )
+        )

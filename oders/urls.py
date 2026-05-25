@@ -19,6 +19,10 @@ urlpatterns=[
   path('deletecart/',views.Viewcart.as_view(),name='deletecart'), 
   path('Retreave_product/<int:pk>/', views.ProductDetailView.as_view(), name='get_cart_details'),
 
+  # categories data
+  path('Categoriesdata/',views.Categoriesdata.as_view(),name="catdata"),
+  path('OfferOrders/',views.OfferOrders.as_view(),name="offerdata"),
+
   
 ]
 urlpatterns += router.urls

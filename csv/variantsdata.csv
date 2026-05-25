@@ -1,0 +1,204 @@
+product_name,color,size,price,offer,stock,image_url
+iPhone 15 Pro Max,Black Titanium,128GB,134999,10,12,https://images.unsplash.com/photo-1511707171634-5f897ff02aa9
+iPhone 15 Pro Max,Blue Titanium,256GB,149999,12,10,https://images.unsplash.com/photo-1511707171634-5f897ff02aa9
+iPhone 15 Pro Max,Natural Titanium,512GB,169999,15,6,https://images.unsplash.com/photo-1511707171634-5f897ff02aa9
+
+Galaxy S24 Ultra,Black,256GB,124999,10,14,https://images.unsplash.com/photo-1598327105666-5b89351aff97
+Galaxy S24 Ultra,Silver,512GB,139999,12,9,https://images.unsplash.com/photo-1598327105666-5b89351aff97
+Galaxy S24 Ultra,Violet,1TB,159999,15,5,https://images.unsplash.com/photo-1598327105666-5b89351aff97
+
+Noise Air Buds,Black,Standard,2499,15,40,https://images.unsplash.com/photo-1505740420928-5e560c06d30e
+Noise Air Buds,White,Pro Edition,3499,18,25,https://images.unsplash.com/photo-1505740420928-5e560c06d30e
+Noise Air Buds,Blue,Gaming Edition,4499,20,18,https://images.unsplash.com/photo-1505740420928-5e560c06d30e
+
+Boat Rockerz 550,Black,Standard,1999,12,50,https://images.unsplash.com/photo-1484704849700-f032a568e944
+Boat Rockerz 550,Red,RGB Edition,2499,15,35,https://images.unsplash.com/photo-1484704849700-f032a568e944
+Boat Rockerz 550,Blue,Pro Edition,2999,18,22,https://images.unsplash.com/photo-1484704849700-f032a568e944
+
+MacBook Air M3,Silver,8GB RAM,114999,8,10,https://images.unsplash.com/photo-1496181133206-80ce9b88a853
+MacBook Air M3,Space Gray,16GB RAM,134999,10,7,https://images.unsplash.com/photo-1496181133206-80ce9b88a853
+MacBook Air M3,Midnight,24GB RAM,159999,12,4,https://images.unsplash.com/photo-1496181133206-80ce9b88a853
+
+Dell XPS 15,Silver,16GB RAM,149999,10,6,https://images.unsplash.com/photo-1517336714739-489689fd1ca8
+Dell XPS 15,Black,32GB RAM,179999,12,4,https://images.unsplash.com/photo-1517336714739-489689fd1ca8
+Dell XPS 15,Gray,64GB RAM,219999,15,2,https://images.unsplash.com/photo-1517336714739-489689fd1ca8
+
+Nike Revolution 7,Black,UK-7,4999,20,30,https://images.unsplash.com/photo-1542291026-7eec264c27ff
+Nike Revolution 7,White,UK-8,5499,22,24,https://images.unsplash.com/photo-1542291026-7eec264c27ff
+Nike Revolution 7,Blue,UK-9,5999,25,18,https://images.unsplash.com/photo-1542291026-7eec264c27ff
+
+Adidas Ultraboost,Black,UK-7,8999,15,20,https://images.unsplash.com/photo-1549298916-b41d501d3772
+Adidas Ultraboost,White,UK-8,9499,18,15,https://images.unsplash.com/photo-1549298916-b41d501d3772
+Adidas Ultraboost,Gray,UK-9,9999,20,10,https://images.unsplash.com/photo-1549298916-b41d501d3772
+
+Fossil Gen 6,Black,42mm,14999,12,15,https://images.unsplash.com/photo-1523275335684-37898b6baf30
+Fossil Gen 6,Brown,44mm,16999,15,10,https://images.unsplash.com/photo-1523275335684-37898b6baf30
+Fossil Gen 6,Silver,46mm,18999,18,6,https://images.unsplash.com/photo-1523275335684-37898b6baf30
+
+Rolex Classic,Gold,40mm,599999,5,2,https://images.unsplash.com/photo-1542496658-e33a6d0d50f6
+Rolex Classic,Silver,42mm,699999,7,1,https://images.unsplash.com/photo-1542496658-e33a6d0d50f6
+Rolex Classic,Black,44mm,799999,10,1,https://images.unsplash.com/photo-1542496658-e33a6d0d50f6
+
+Men Slim Fit T-Shirt,Black,M,799,20,45,https://images.unsplash.com/photo-1445205170230-053b83016050
+Men Slim Fit T-Shirt,White,L,899,22,38,https://images.unsplash.com/photo-1445205170230-053b83016050
+Men Slim Fit T-Shirt,Blue,XL,999,25,30,https://images.unsplash.com/photo-1445205170230-053b83016050
+
+Women Casual Jacket,Black,M,2499,18,25,https://images.unsplash.com/photo-1483985988355-763728e1935b
+Women Casual Jacket,Pink,L,2799,20,18,https://images.unsplash.com/photo-1483985988355-763728e1935b
+Women Casual Jacket,Beige,XL,2999,22,12,https://images.unsplash.com/photo-1483985988355-763728e1935b
+
+Sony WH-1000XM5,Black,Standard,24999,12,18,https://images.unsplash.com/photo-1505740420928-5e560c06d30e
+Sony WH-1000XM5,Silver,Pro Edition,26999,15,12,https://images.unsplash.com/photo-1505740420928-5e560c06d30e
+Sony WH-1000XM5,Blue,Gaming Edition,28999,18,8,https://images.unsplash.com/photo-1505740420928-5e560c06d30e
+
+HP Pavilion Gaming,Black,16GB RAM,74999,10,10,https://images.unsplash.com/photo-1496181133206-80ce9b88a853
+HP Pavilion Gaming,Green,32GB RAM,89999,12,7,https://images.unsplash.com/photo-1496181133206-80ce9b88a853
+HP Pavilion Gaming,Gray,64GB RAM,109999,15,4,https://images.unsplash.com/photo-1496181133206-80ce9b88a853
+
+Samsung Smart TV,Black,43 Inch,39999,12,12,https://images.unsplash.com/photo-1593784991095-a205069470b6
+Samsung Smart TV,Gray,55 Inch,59999,15,8,https://images.unsplash.com/photo-1593784991095-a205069470b6
+Samsung Smart TV,Silver,65 Inch,79999,18,5,https://images.unsplash.com/photo-1593784991095-a205069470b6
+
+Canon EOS 1500D,Black,Body Only,39999,10,9,https://images.unsplash.com/photo-1516035069371-29a1b244cc32
+Canon EOS 1500D,Black,18-55mm Kit,44999,12,6,https://images.unsplash.com/photo-1516035069371-29a1b244cc32
+Canon EOS 1500D,Gray,Twin Lens Kit,54999,15,4,https://images.unsplash.com/photo-1516035069371-29a1b244cc32
+
+JBL Flip 6,Black,Standard,9999,15,20,https://images.unsplash.com/photo-1589003077984-894e133dabab
+JBL Flip 6,Blue,Party Edition,11999,18,14,https://images.unsplash.com/photo-1589003077984-894e133dabab
+JBL Flip 6,Red,Pro Edition,13999,20,9,https://images.unsplash.com/photo-1589003077984-894e133dabab
+
+ASUS ROG Strix,Black,16GB RAM,119999,10,7,https://images.unsplash.com/photo-1517336714739-489689fd1ca8
+ASUS ROG Strix,Gray,32GB RAM,149999,12,5,https://images.unsplash.com/photo-1517336714739-489689fd1ca8
+ASUS ROG Strix,Red,64GB RAM,179999,15,3,https://images.unsplash.com/photo-1517336714739-489689fd1ca8
+
+Puma Sports Shoes,Black,UK-7,3999,18,30,https://images.unsplash.com/photo-1542291026-7eec264c27ff
+Puma Sports Shoes,White,UK-8,4499,20,24,https://images.unsplash.com/photo-1542291026-7eec264c27ff
+Puma Sports Shoes,Blue,UK-9,4999,22,18,https://images.unsplash.com/photo-1542291026-7eec264c27ff
+
+Apple Watch Ultra,Orange,49mm,89999,8,10,https://images.unsplash.com/photo-1523275335684-37898b6baf30
+Apple Watch Ultra,Black,49mm LTE,99999,10,7,https://images.unsplash.com/photo-1523275335684-37898b6baf30
+Apple Watch Ultra,Silver,49mm Titanium,109999,12,5,https://images.unsplash.com/photo-1523275335684-37898b6baf30
+
+OnePlus 12,Black,128GB,64999,10,15,https://images.unsplash.com/photo-1511707171634-5f897ff02aa9
+OnePlus 12,Green,256GB,69999,12,10,https://images.unsplash.com/photo-1511707171634-5f897ff02aa9
+OnePlus 12,Silver,512GB,74999,15,8,https://images.unsplash.com/photo-1511707171634-5f897ff02aa9
+
+Realme Narzo 70,Black,128GB,18999,8,25,https://images.unsplash.com/photo-1598327105666-5b89351aff97
+Realme Narzo 70,Blue,256GB,20999,10,18,https://images.unsplash.com/photo-1598327105666-5b89351aff97
+Realme Narzo 70,Green,512GB,23999,12,12,https://images.unsplash.com/photo-1598327105666-5b89351aff97
+
+iQOO Neo 9,Black,128GB,32999,10,20,https://images.unsplash.com/photo-1511707171634-5f897ff02aa9
+iQOO Neo 9,Red,256GB,35999,12,15,https://images.unsplash.com/photo-1511707171634-5f897ff02aa9
+iQOO Neo 9,Blue,512GB,39999,15,10,https://images.unsplash.com/photo-1511707171634-5f897ff02aa9
+
+Lenovo Legion 5,Black,16GB RAM,89999,15,7,https://images.unsplash.com/photo-1496181133206-80ce9b88a853
+Lenovo Legion 5,Gray,32GB RAM,109999,18,5,https://images.unsplash.com/photo-1496181133206-80ce9b88a853
+Lenovo Legion 5,White,64GB RAM,129999,20,3,https://images.unsplash.com/photo-1496181133206-80ce9b88a853
+
+Acer Nitro V,Black,16GB RAM,74999,12,10,https://images.unsplash.com/photo-1517336714739-489689fd1ca8
+Acer Nitro V,Blue,32GB RAM,89999,15,6,https://images.unsplash.com/photo-1517336714739-489689fd1ca8
+Acer Nitro V,Gray,64GB RAM,109999,18,4,https://images.unsplash.com/photo-1517336714739-489689fd1ca8
+
+MSI Katana GF66,Black,16GB RAM,99999,15,5,https://images.unsplash.com/photo-1496181133206-80ce9b88a853
+MSI Katana GF66,Red,32GB RAM,119999,18,4,https://images.unsplash.com/photo-1496181133206-80ce9b88a853
+MSI Katana GF66,Gray,64GB RAM,139999,20,2,https://images.unsplash.com/photo-1496181133206-80ce9b88a853
+
+Logitech G502,Black,Standard,4999,10,30,https://images.unsplash.com/photo-1527814050087-3793815479db
+Logitech G502,White,RGB Edition,5999,12,20,https://images.unsplash.com/photo-1527814050087-3793815479db
+Logitech G502,Red,Pro Edition,6999,15,15,https://images.unsplash.com/photo-1527814050087-3793815479db
+
+Razer DeathAdder,Black,Standard,5999,10,25,https://images.unsplash.com/photo-1527814050087-3793815479db
+Razer DeathAdder,Green,RGB Edition,6999,12,18,https://images.unsplash.com/photo-1527814050087-3793815479db
+Razer DeathAdder,White,Pro Edition,7999,15,10,https://images.unsplash.com/photo-1527814050087-3793815479db
+
+HP Wireless Keyboard,Black,Compact,2499,8,40,https://images.unsplash.com/photo-1511467687858-23d96c32e4ae
+HP Wireless Keyboard,White,Full Size,3499,10,30,https://images.unsplash.com/photo-1511467687858-23d96c32e4ae
+HP Wireless Keyboard,Gray,RGB Edition,4499,12,20,https://images.unsplash.com/photo-1511467687858-23d96c32e4ae
+
+Mechanical RGB Keyboard,Black,Blue Switch,5999,10,25,https://images.unsplash.com/photo-1511467687858-23d96c32e4ae
+Mechanical RGB Keyboard,White,Red Switch,6999,12,18,https://images.unsplash.com/photo-1511467687858-23d96c32e4ae
+Mechanical RGB Keyboard,Gray,Brown Switch,7999,15,12,https://images.unsplash.com/photo-1511467687858-23d96c32e4ae
+
+Sony Bravia 55,Black,55 Inch,79999,15,6,https://images.unsplash.com/photo-1593784991095-a205069470b6
+Sony Bravia 55,Silver,65 Inch,109999,18,4,https://images.unsplash.com/photo-1593784991095-a205069470b6
+Sony Bravia 55,Gray,75 Inch,149999,20,2,https://images.unsplash.com/photo-1593784991095-a205069470b6
+
+LG OLED Evo,Black,55 Inch,99999,15,5,https://images.unsplash.com/photo-1593784991095-a205069470b6
+LG OLED Evo,Silver,65 Inch,129999,18,3,https://images.unsplash.com/photo-1593784991095-a205069470b6
+LG OLED Evo,Gray,77 Inch,189999,20,2,https://images.unsplash.com/photo-1593784991095-a205069470b6
+
+Mi Smart TV X,Black,43 Inch,29999,10,15,https://images.unsplash.com/photo-1593784991095-a205069470b6
+Mi Smart TV X,Gray,50 Inch,39999,12,10,https://images.unsplash.com/photo-1593784991095-a205069470b6
+Mi Smart TV X,Silver,55 Inch,49999,15,8,https://images.unsplash.com/photo-1593784991095-a205069470b6
+
+Canon R50,Black,Body Only,74999,10,8,https://images.unsplash.com/photo-1516035069371-29a1b244cc32
+Canon R50,Black,18-45mm Kit,84999,12,6,https://images.unsplash.com/photo-1516035069371-29a1b244cc32
+Canon R50,Silver,Twin Lens Kit,99999,15,4,https://images.unsplash.com/photo-1516035069371-29a1b244cc32
+
+Nikon D7500,Black,Body Only,89999,10,6,https://images.unsplash.com/photo-1516035069371-29a1b244cc32
+Nikon D7500,Black,18-140mm Kit,109999,12,4,https://images.unsplash.com/photo-1516035069371-29a1b244cc32
+Nikon D7500,Gray,Twin Lens Kit,129999,15,2,https://images.unsplash.com/photo-1516035069371-29a1b244cc32
+
+GoPro Hero 12,Black,Standard,39999,10,12,https://images.unsplash.com/photo-1516035069371-29a1b244cc32
+GoPro Hero 12,Blue,Adventure Kit,44999,12,8,https://images.unsplash.com/photo-1516035069371-29a1b244cc32
+GoPro Hero 12,Gray,Creator Edition,54999,15,5,https://images.unsplash.com/photo-1516035069371-29a1b244cc32
+
+Men Oversized T-Shirt,Black,M,799,20,25,https://images.unsplash.com/photo-1521572163474-6864f9cf17ab
+Men Oversized T-Shirt,White,L,849,15,18,https://images.unsplash.com/photo-1521572163474-6864f9cf17ab
+Men Oversized T-Shirt,Blue,XL,899,10,12,https://images.unsplash.com/photo-1521572163474-6864f9cf17ab
+
+Graphic Printed Tee,Black,M,699,25,30,https://images.unsplash.com/photo-1503341504253-dff4815485f1
+Graphic Printed Tee,Red,L,749,20,22,https://images.unsplash.com/photo-1503341504253-dff4815485f1
+Graphic Printed Tee,White,XL,799,15,15,https://images.unsplash.com/photo-1503341504253-dff4815485f1
+
+Polo Neck T-Shirt,Navy,M,1199,18,16,https://images.unsplash.com/photo-1512436991641-6745cdb1723f
+Polo Neck T-Shirt,Black,L,1249,15,14,https://images.unsplash.com/photo-1512436991641-6745cdb1723f
+Polo Neck T-Shirt,White,XL,1299,12,10,https://images.unsplash.com/photo-1512436991641-6745cdb1723f
+
+Round Neck Cotton Tee,Gray,M,599,20,35,https://images.unsplash.com/photo-1527719327859-c6ce80353573
+Round Neck Cotton Tee,Black,L,649,15,28,https://images.unsplash.com/photo-1527719327859-c6ce80353573
+Round Neck Cotton Tee,Olive,XL,699,10,20,https://images.unsplash.com/photo-1527719327859-c6ce80353573
+
+Men Gym T-Shirt,Black,M,999,30,40,https://images.unsplash.com/photo-1515886657613-9f3515b0c78f
+Men Gym T-Shirt,Blue,L,1049,25,32,https://images.unsplash.com/photo-1515886657613-9f3515b0c78f
+Men Gym T-Shirt,Red,XL,1099,20,26,https://images.unsplash.com/photo-1515886657613-9f3515b0c78f
+
+Women Casual Top,Pink,S,899,22,18,https://images.unsplash.com/photo-1483985988355-763728e1935b
+Women Casual Top,White,M,949,18,15,https://images.unsplash.com/photo-1483985988355-763728e1935b
+Women Casual Top,Black,L,999,15,10,https://images.unsplash.com/photo-1483985988355-763728e1935b
+
+Women Crop Top,White,S,799,20,25,https://images.unsplash.com/photo-1496747611176-843222e1e57c
+Women Crop Top,Black,M,849,18,19,https://images.unsplash.com/photo-1496747611176-843222e1e57c
+Women Crop Top,Lavender,L,899,15,13,https://images.unsplash.com/photo-1496747611176-843222e1e57c
+
+Men Hoodie Sweatshirt,Black,M,1999,25,20,https://images.unsplash.com/photo-1503342217505-b0a15ec3261c
+Men Hoodie Sweatshirt,Gray,L,2099,20,17,https://images.unsplash.com/photo-1503342217505-b0a15ec3261c
+Men Hoodie Sweatshirt,Navy,XL,2199,15,11,https://images.unsplash.com/photo-1503342217505-b0a15ec3261c
+
+Slim Fit Jeans,Blue,30,1799,20,18,https://images.unsplash.com/photo-1542272604-787c3835535d
+Slim Fit Jeans,Black,32,1899,18,14,https://images.unsplash.com/photo-1542272604-787c3835535d
+Slim Fit Jeans,Gray,34,1999,15,10,https://images.unsplash.com/photo-1542272604-787c3835535d
+
+Regular Fit Jeans,Blue,30,1699,22,20,https://images.unsplash.com/photo-1473966968600-fa801b869a1a
+Regular Fit Jeans,Black,32,1799,18,15,https://images.unsplash.com/photo-1473966968600-fa801b869a1a
+Regular Fit Jeans,Gray,34,1899,15,12,https://images.unsplash.com/photo-1473966968600-fa801b869a1a
+
+Cargo Pants,Olive,30,1499,20,19,https://images.unsplash.com/photo-1506629905607-d9d73f4b89d6
+Cargo Pants,Black,32,1599,18,15,https://images.unsplash.com/photo-1506629905607-d9d73f4b89d6
+Cargo Pants,Khaki,34,1699,15,10,https://images.unsplash.com/photo-1506629905607-d9d73f4b89d6
+
+Men Joggers,Black,M,1299,25,30,https://images.unsplash.com/photo-1517841905240-472988babdf9
+Men Joggers,Gray,L,1399,20,24,https://images.unsplash.com/photo-1517841905240-472988babdf9
+Men Joggers,Navy,XL,1499,18,18,https://images.unsplash.com/photo-1517841905240-472988babdf9
+
+Sports Lower,Black,M,1199,22,28,https://images.unsplash.com/photo-1515886657613-9f3515b0c78f
+Sports Lower,Gray,L,1299,18,22,https://images.unsplash.com/photo-1515886657613-9f3515b0c78f
+Sports Lower,Navy,XL,1399,15,17,https://images.unsplash.com/photo-1515886657613-9f3515b0c78f
+
+Track Pants,Black,M,1399,20,26,https://images.unsplash.com/photo-1506629905607-d9d73f4b89d6
+Track Pants,Blue,L,1499,18,21,https://images.unsplash.com/photo-1506629905607-d9d73f4b89d6
+Track Pants,Gray,XL,1599,15,16,https://images.unsplash.com/photo-1506629905607-d9d73f4b89d6
+
+Cotton Shorts,Black,M,699,25,35,https://images.unsplash.com/photo-1515886657613-9f3515b0c78f
+Cotton Shorts,Gray,L,749,20,29,https://images.unsplash.com/photo-1515886657613-9f3515b0c78f
+Cotton Shorts,Navy,XL,799,15,22,https://images.unsplash.com/photo-1515886657613-9f3515b0c78f

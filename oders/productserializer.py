@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import *
-
+from .models import Categoriesvarient
 class VarientProductSerializer(serializers.ModelSerializer):
     color_name=serializers.CharField(source='colors.color',read_only=True)
     size_name=serializers.CharField(source='sizes.size',read_only=True)
@@ -12,6 +12,11 @@ class VarientProductSerializer(serializers.ModelSerializer):
         model=variant
         fields=['id','color_name','size_name','price','offer','stock','product','image_url','final_price','offer_price','colors','sizes']  
         read_only_fields = ['id','color_name','size_name','image_url','final_price','offer_price']
+        extra_kwargs={
+            "colors":{'write_only':True},
+            "sizes":{'write_only':True},
+        
+        }
 
 
     def validate_stock(self,value):
@@ -44,12 +49,16 @@ class VarientProductSerializer(serializers.ModelSerializer):
         return variant.objects.create(**validated_data)
 
 class ProductSerializer(serializers.ModelSerializer):
-    categorie_name=serializers.CharField(source='categorie.color',read_only=True)
+    categorie_name=serializers.CharField(source='category.categorie',read_only=True)
     variant_set=VarientProductSerializer(many=True,read_only=True)
     class Meta:
         model = Product
-        fields = ['id', 'name', 'brand', 'description', 'categorie_name','product_image','variant_set','categorie']
-        read_only_fields = ['id']
+        fields = ['id', 'name', 'brand', 'description', 'categorie_name','product_image','variant_set','category']
+        
+        extra_kwargs = {
+            'category': {'write_only': True},
+        
+        }
 
 
     def validate_name(self,value):
@@ -76,7 +85,10 @@ class ProductSerializer(serializers.ModelSerializer):
         product=Product.objects.create(**validated_data)
         return product
         
-
+class catdataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Categoriesvarient
+        fields='__all__'
 
    
 

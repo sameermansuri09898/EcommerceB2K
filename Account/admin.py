@@ -3,5 +3,8 @@ from .models import Otp,CustomUser,BuyerShipping
 
 # Register your models here.
 admin.site.register(Otp)
-admin.site.register(CustomUser)
 admin.site.register(BuyerShipping)
+
+@admin.register(CustomUser)
+class CustomUserAdmin(admin.ModelAdmin):
+  list_display=['id']
