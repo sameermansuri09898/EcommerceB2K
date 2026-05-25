@@ -9,7 +9,7 @@ venv/
 env/
 ENV/
 .venv/
-.csv
+csv/
 .env
 # Django stuff
 *.log
