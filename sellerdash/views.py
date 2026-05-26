@@ -38,15 +38,6 @@ class selleaccount(APIView):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
   
 
-class Itpverification(APIView):
-  permission_classes=[IsAuthenticated]
-  authentication_classes=[JWTAuthentication]
-  def post(self,request):
-    serializer=OtpSerializer(data=request.data)
-    if serializer.is_valid():
-      seller=serializer.save()
-      return Response({"message":"Shipping address created successfully"}, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
 
 
 class Itpverification(APIView):
@@ -74,8 +65,6 @@ class resendotp(APIView):
       return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
 
 # --------------------------get seller products---------------
-
-
 
 
 class GetSellerProduct(APIView):

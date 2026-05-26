@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import axios from "axios";
 import {
   Menu,
   X,
@@ -9,11 +10,15 @@ import {
   Home,
   Search,
 } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation,Link } from "react-router-dom";
 
 import Asso from "./asso";
 
 const Nav = () => {
+
+  const access = localStorage.getItem("access");
+  console.log(access)
+  
  
   const [mobileMenu, setMobileMenu] = useState(false);
   const [userPopup, setUserPopup] = useState(false);
@@ -38,6 +43,35 @@ const Nav = () => {
       document.removeEventListener("mousedown", handler);
     };
   }, []);
+
+  // logout api 
+const handleLogout = async () => {
+
+  try {
+
+    const refresh = localStorage.getItem("refresh");
+
+    await axios.post(
+      "http://127.0.0.1:8000/api/logout/",
+      {
+        refresh_token: refresh,
+      }
+    );
+
+  } catch (error) {
+
+    console.log(error.response?.data);
+
+  } finally {
+
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+
+    navigate("/login");
+
+    window.location.reload();
+  }
+};
 
   return (
     <div className="bg-gray-100  relative">
@@ -153,85 +187,89 @@ const Nav = () => {
                   {/* MENU */}
                   <div className="p-2 flex flex-col">
 
-                    {isAuthenticated ? (
-                      <>
-                        <button
-                          className="
-                            flex items-center gap-3
-                            px-4 py-3 rounded-xl
-                            hover:bg-gray-100
-                            transition
-                          "
-                        >
-                          <User size={18} />
-                          My Profile
-                        </button>
+                  {access ? (
+  <>
+    <button
+      className="
+        flex items-center gap-3
+        px-4 py-3 rounded-xl
+        hover:bg-gray-100
+        transition
+      "
+    >
+      <User size={18} />
+      My Profile
+    </button>
 
-                        <button onClick={() => navigate('/BecomeSeller')}
-                          className="
-                            flex items-center gap-3
-                            px-4 py-3 rounded-xl
-                            hover:bg-gray-100
-                            transition
-                          "
-                        >
-                          <Home size={18} />
-                          Add Address
-                        </button>
+    <button
+      onClick={() => navigate('/')}
+      className="
+        flex items-center gap-3
+        px-4 py-3 rounded-xl
+        hover:bg-gray-100
+        transition
+      "
+    >
+      <Home size={18} />
+      Add Address
+    </button>
 
-                        <button
-                          className="
-                            flex items-center gap-3
-                            px-4 py-3 rounded-xl
-                            hover:bg-gray-100
-                            transition
-                          "
-                        >
-                          <Heart size={18} />
-                          Wishlist
-                        </button>
+    <button
+      className="
+        flex items-center gap-3
+        px-4 py-3 rounded-xl
+        hover:bg-gray-100
+        transition
+      "
+    >
+      <Heart size={18} />
+      Wishlist
+    </button>
 
-                        <button
-                          className="
-                            flex items-center gap-3
-                            px-4 py-3 rounded-xl
-                            hover:bg-red-50
-                            text-red-500
-                            transition
-                          "
-                        >
-                          <LogOut size={18} />
-                          Logout
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          className="
-                            w-full bg-indigo-600
-                            text-white py-3
-                            rounded-xl
-                            hover:bg-indigo-700
-                            transition font-medium
-                          "
-                        >
-                          Login
-                        </button>
+    <button
+      onClick={handleLogout}
+      className="
+        flex items-center gap-3
+        px-4 py-3 rounded-xl
+        hover:bg-red-50
+        text-red-500
+        transition
+      "
+    >
+      <LogOut size={18} />
+      Logout
+    </button>
+  </>
+) : (
+  <>
+    <button
+      onClick={() => navigate('/login')}
+      className="
+        w-full bg-indigo-600
+        text-white py-3
+        rounded-xl
+        hover:bg-indigo-700
+        transition font-medium
+      "
+    >
+      Login
+    </button>
 
-                        <button
-                          className="
-                            mt-3 w-full
-                            border border-indigo-600
-                            text-indigo-600
-                            py-3 rounded-xl
-                            hover:bg-indigo-50
-                            transition font-medium
-                          "
-                        >
-                          Register
-                        </button>
-                      </>
-                    )}
+    <button
+      onClick={() => navigate('/register')}
+      className="
+        mt-3 w-full
+        border border-indigo-600
+        text-indigo-600
+        py-3 rounded-xl
+        hover:bg-indigo-50
+        transition font-medium
+      "
+    >
+      Register
+    </button>
+  </>
+)}
 
                   </div>
                 </div>
@@ -244,7 +282,7 @@ const Nav = () => {
             </button>
 
             {/* CART */}
-            <button  onClick={() => navigate('/Cart')}
+          {access ?(  <button  onClick={() => navigate('/Cart')}
             className="relative hover:text-indigo-600 transition cursor-pointer">
 
               <ShoppingCart size={22} />
@@ -261,7 +299,24 @@ const Nav = () => {
                 2
               </span>
 
-            </button>
+            </button>):(  <button  onClick={() => navigate('/login')}
+            className="relative hover:text-indigo-600 transition cursor-pointer">
+
+              <ShoppingCart size={22} />
+
+              <span
+                className="
+                  absolute -top-2 -right-2
+                  bg-indigo-600 text-white
+                  text-xs w-5 h-5
+                  rounded-full
+                  flex items-center justify-center
+                "
+              >
+                2
+              </span>
+
+            </button>)}
           </div>
 
           {/* MOBILE MENU BUTTON */}

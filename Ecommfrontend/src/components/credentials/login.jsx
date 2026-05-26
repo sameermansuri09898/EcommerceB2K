@@ -58,13 +58,13 @@ export default function LoginPage() {
       console.log(data);
 
       // Save JWT Tokens
-      if (data.access) {
-        localStorage.setItem("access", data.access);
-      }
+      if (data.access_token) {
+  localStorage.setItem("access", data.access_token);
+}
 
-      if (data.refresh) {
-        localStorage.setItem("refresh", data.refresh);
-      }
+if (data.refresh_token) {
+  localStorage.setItem("refresh", data.refresh_token);
+}
 
       // Optional user data
       if (data.user) {
