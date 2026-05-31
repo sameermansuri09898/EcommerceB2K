@@ -3,7 +3,7 @@ from Account.models import CustomUser
 from django.conf import settings
 from django.utils import timezone
 
-now=timezone.now()
+
 class Coupons(models.Model):
   coupon=models.CharField(max_length=30)
   user_usage=models.ManyToManyField(settings.AUTH_USER_MODEL,blank=True)
@@ -12,13 +12,14 @@ class Coupons(models.Model):
   min_oder_value=models.DecimalField(max_digits=10,decimal_places=2)
 
   max_coupon=models.PositiveIntegerField(default=100)
-  used_coupon=models.PositiveIntegerField()
+  used_coupon=models.PositiveIntegerField(default=0)
 
   valid_from=models.DateTimeField()
   valid_to=models.DateTimeField()
   Is_active=models.BooleanField(default=True)
 
   def valid_coupon(self,user,total_cart_Amount):
+    now=timezone.now()
 
     if not self.Is_active:
       return False ,"Coupon Offer is Not Active"
@@ -39,7 +40,7 @@ class Coupons(models.Model):
   
 
   def save(self,*args,**kwargs):
-    if self.max_coupon<=0:
+    if self.max_coupon<=self.used_coupon:
       self.Is_active=False
     super().save(*args,**kwargs)  
   
