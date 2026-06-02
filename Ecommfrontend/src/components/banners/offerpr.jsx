@@ -101,154 +101,185 @@ export default function OfferProducts() {
   }
 
   return (
+  <div className="max-w-7xl mx-auto px-4 mt-10">
 
-    <div className="px-3 md:px-6 mt-10">
+    {/* Header */}
+    <div className="flex items-center justify-between mb-6">
 
-      {/* heading */}
+      <div>
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+          Featured Deals
+        </h2>
 
-      <div className="flex items-center justify-between mb-5">
-
-        <div>
-
-          <h1 className="text-2xl md:text-4xl font-black">
-            🔥 Mega Deals
-          </h1>
-
-          <p className="text-gray-500 mt-1 text-sm md:text-base">
-            Products with 50% or more OFF On T-Shirt
-          </p>
-
-        </div>
-
+        <p className="text-gray-500 mt-1">
+          Save up to 70% on selected products
+        </p>
       </div>
 
-      {/* swiper */}
+    </div>
 
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-red-500 via-pink-500 to-orange-400 shadow-2xl">
+    {/* Slider */}
+    <div className="relative overflow-hidden rounded-3xl bg-white border border-gray-200 shadow-xl">
 
-        {products.map((product, index) => {
+      {/* Background Decoration */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-red-50 rounded-full blur-3xl opacity-70" />
+      <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-50 rounded-full blur-3xl opacity-70" />
 
-          const bestVariant =
-            product.variant_set.reduce((max, variant) =>
-              variant.offer > max.offer
-                ? variant
-                : max
-            );
+      {products.map((product, index) => {
 
-          return (
+        const bestVariant = product.variant_set.reduce((max, variant) =>
+          variant.offer > max.offer ? variant : max
+        );
 
-            <div
-              key={product.id}
-              className={`
-                transition-all duration-700
-                ${index === current
-                  ? "opacity-100 relative"
-                  : "opacity-0 absolute inset-0 pointer-events-none"
-                }
-              `}
-            >
+        return (
+          <div
+            key={product.id}
+            className={`transition-all duration-700 ${
+              current === index
+                ? "opacity-100 relative"
+                : "opacity-0 absolute inset-0 pointer-events-none"
+            }`}
+          >
 
-              <div className="grid md:grid-cols-2 items-center min-h-[280px] md:min-h-[420px]">
+            <div className="grid lg:grid-cols-2 items-center min-h-[550px]">
 
-                {/* left content */}
+              {/* LEFT */}
+              <div className="p-8 md:p-16 z-10">
 
-                <div className="p-6 md:p-14 text-white">
+                <span className="inline-flex items-center bg-red-100 text-red-600 px-4 py-2 rounded-full text-sm font-semibold">
+                  🔥 {bestVariant.offer}% OFF
+                </span>
 
-                  <p className="uppercase tracking-[4px] text-xs md:text-sm mb-3 font-semibold">
-                    Limited Time Offer
-                  </p>
+                <h1 className="mt-6 text-4xl md:text-6xl font-bold text-gray-900 leading-tight">
+                  {product.name}
+                </h1>
 
-                  <h1 className="text-3xl md:text-6xl font-black leading-tight">
-                    {product.name}
-                  </h1>
+                <p className="mt-4 text-lg text-gray-500">
+                  {product.brand}
+                </p>
 
-                  <p className="mt-3 text-white/90 text-sm md:text-lg">
-                    {product.brand}
-                  </p>
+                <div className="flex items-center gap-4 mt-8">
 
-                  <div className="mt-6 flex items-center gap-4 flex-wrap">
+                  <span className="text-4xl md:text-5xl font-bold text-gray-900">
+                    ₹{bestVariant.final_price}
+                  </span>
 
-                    <span className="text-3xl md:text-5xl font-black">
-                      ₹{bestVariant.final_price}
-                    </span>
-
-                    <span className="line-through text-lg md:text-2xl text-white/70">
-                      ₹{bestVariant.price}
-                    </span>
-
-                  </div>
-
-                  <div className="mt-3 inline-block bg-white text-red-600 px-4 py-2 rounded-2xl font-black text-lg shadow-lg">
-                    {bestVariant.offer}% OFF
-                  </div>
-<button
-  onClick={() => navigate("/OfferProducts")}
-  className="mt-7 bg-black text-white px-7 py-3 rounded-2xl font-bold hover:scale-105 transition duration-300"
->
-  Shop Now
-</button>
+                  <span className="line-through text-2xl text-gray-400">
+                    ₹{bestVariant.price}
+                  </span>
 
                 </div>
 
-                {/* right image */}
+                <div className="mt-8 flex gap-4">
 
-                <div className="flex items-center justify-center p-6">
+                  <button
+                    onClick={() => navigate("/OfferProducts")}
+                    className="bg-black text-white px-8 py-4 rounded-xl font-semibold hover:bg-gray-800 transition"
+                  >
+                    Shop Now
+                  </button>
 
-                  <img
-                    src={bestVariant.image_url}
-                    alt={product.name}
-                    className="h-[220px] md:h-[380px] object-contain drop-shadow-2xl hover:scale-105 transition duration-300"
-                  />
+                  <button
+                    className="border border-gray-300 px-8 py-4 rounded-xl font-semibold hover:bg-gray-100 transition"
+                  >
+                    View Details
+                  </button>
 
                 </div>
 
               </div>
 
+              {/* RIGHT */}
+              <div className="flex justify-center items-center p-10 z-10">
+
+                <img
+                  src={bestVariant.image_url}
+                  alt={product.name}
+                  className="
+                    h-[320px]
+                    md:h-[480px]
+                    object-contain
+                    drop-shadow-[0_30px_40px_rgba(0,0,0,0.15)]
+                    hover:scale-105
+                    transition-all
+                    duration-500
+                  "
+                />
+
+              </div>
+
             </div>
 
-          );
-        })}
+          </div>
+        );
+      })}
 
-        {/* arrows */}
+      {/* LEFT ARROW */}
+      <button
+        onClick={prevSlide}
+        className="
+          absolute
+          left-5
+          top-1/2
+          -translate-y-1/2
+          w-12
+          h-12
+          bg-white
+          shadow-lg
+          rounded-full
+          flex
+          items-center
+          justify-center
+          text-gray-700
+          hover:bg-gray-100
+          z-20
+        "
+      >
+        <ChevronLeft size={22} />
+      </button>
 
-        <button
-          onClick={prevSlide}
-          className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-md hover:bg-white/40 p-2 rounded-full text-white z-20"
-        >
-          <ChevronLeft size={24} />
-        </button>
+      {/* RIGHT ARROW */}
+      <button
+        onClick={nextSlide}
+        className="
+          absolute
+          right-5
+          top-1/2
+          -translate-y-1/2
+          w-12
+          h-12
+          bg-white
+          shadow-lg
+          rounded-full
+          flex
+          items-center
+          justify-center
+          text-gray-700
+          hover:bg-gray-100
+          z-20
+        "
+      >
+        <ChevronRight size={22} />
+      </button>
 
-        <button
-          onClick={nextSlide}
-          className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-md hover:bg-white/40 p-2 rounded-full text-white z-20"
-        >
-          <ChevronRight size={24} />
-        </button>
+      {/* DOTS */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-20">
 
-        {/* dots */}
-
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-
-          {products.map((_, index) => (
-
-            <button
-              key={index}
-              onClick={() => setCurrent(index)}
-              className={`
-                h-2 rounded-full transition-all duration-300
-                ${current === index
-                  ? "w-8 bg-white"
-                  : "w-2 bg-white/50"
-                }
-              `}
-            />
-
-          ))}
-
-        </div>
+        {products.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrent(index)}
+            className={`transition-all duration-300 rounded-full ${
+              current === index
+                ? "w-10 h-3 bg-black"
+                : "w-3 h-3 bg-gray-300"
+            }`}
+          />
+        ))}
 
       </div>
 
     </div>
-  );
+  </div>
+);
 }

@@ -75,7 +75,7 @@ export default function Categories() {
   }
 
   return (
-    <div className="w-full p-4">
+    <div className="w-full mt-5 mb-5 margin-auto max-w-7xl mx-auto">
       <Swiper
         modules={[Navigation]}
        
@@ -92,7 +92,7 @@ export default function Categories() {
             slidesPerView: 8,
           },
           1024: {
-            slidesPerView: 11,
+            slidesPerView: 10,
           },
         }}
       >

@@ -1,28 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
+import CategorySlide from "../categories/slidecat";
 
 export default function ProductCards() {
-
   const [users, setUsers] = useState([]);
-
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState(null);
 
-  // selected variants
   const [selectedVariants, setSelectedVariants] = useState({});
 
   useEffect(() => {
-
     const controller = new AbortController();
 
     const fetchProducts = async () => {
-
       setLoading(true);
-
       setError(null);
 
       try {
-
         const response = await fetch(
           "http://127.0.0.1:8000/api/productlist/",
           {
@@ -42,21 +35,16 @@ export default function ProductCards() {
 
         setUsers(data);
 
-        // default variant
         const defaults = {};
-
         data.forEach((product) => {
           defaults[product.id] = product.variant_set[0];
         });
 
         setSelectedVariants(defaults);
-
       } catch (error) {
-
         if (error.name !== "AbortError") {
           setError(error.message);
         }
-
       } finally {
         setLoading(false);
       }
@@ -65,215 +53,150 @@ export default function ProductCards() {
     fetchProducts();
 
     return () => controller.abort();
-
   }, []);
 
-  // change variant
   const handleVariantChange = (productId, variant) => {
-
     setSelectedVariants((prev) => ({
       ...prev,
       [productId]: variant,
     }));
   };
 
-  // loading
   if (loading) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-100">
-        <h1 className="text-2xl md:text-3xl font-bold">
-          Loading...
-        </h1>
+        <h1 className="text-2xl font-bold">Loading...</h1>
       </div>
     );
   }
 
-  // error
   if (error) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-100">
-        <h1 className="text-red-500 text-lg md:text-2xl font-semibold">
-          Error: {error}
+        <h1 className="text-red-500 text-xl font-semibold">
+          {error}
         </h1>
       </div>
     );
   }
 
   return (
+    <div className="bg-gray-100 min-h-screen py-10">
+      <div className="max-w-7xl mx-auto px-4">
 
-    <div className="min-h-screen bg-gray-100 p-3 md:p-6">
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">Products</h1>
 
-      {/* heading */}
+          <button className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition">
+            Filter
+          </button>
+        </div>
 
-      <div className="flex items-center justify-between mb-5 md:mb-8">
+        {/* GRID */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 
-        <h1 className="text-2xl md:text-4xl font-bold">
-          Products
-        </h1>
+          {users.map((user, index) => {
 
-        <button className="bg-black text-white px-4 py-2 rounded-xl text-sm md:text-base hover:bg-gray-800 transition">
-          Filter
-        </button>
+            const selectedVariant =
+              selectedVariants[user.id];
 
-      </div>
+            return (
+              <Fragment key={user.id}>
 
-      {/* grid */}
+                {/* PRODUCT CARD */}
+                <div className="bg-white rounded-xl shadow-sm hover:shadow-xl transition overflow-hidden group w-full">
 
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
+                  {/* IMAGE */}
+                  <div className="relative w-full aspect-[4/3] bg-white flex items-center justify-center p-3 overflow-hidden">
+                  <img src={selectedVariant?.image_url ||"https://via.placeholder.com/300"}
+                  alt={user.name} className="w-full h-full object-contain
+                  transition-transform
+                  duration-300
+                  group-hover:scale-105"/>
+</div>
 
-        {users.map((user) => {
+                  {/* CONTENT */}
+                  <div className="p-4">
 
-          const selectedVariant =
-            selectedVariants[user.id];
+                    <h2 className="font-bold text-lg line-clamp-1">
+                      {user.name}
+                    </h2>
 
-          return (
+                    <p className="text-sm text-gray-500">
+                      {user.brand}
+                    </p>
 
-            <div
-              key={user.id}
-              className="bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-300 overflow-hidden group"
-            >
+                    <p className="text-xs text-gray-400">
+                      {user.categorie_name}
+                    </p>
 
-              {/* image */}
+                    {/* PRICE */}
+                    <div className="mt-3">
+                      <span className="text-xl font-bold text-green-600">
+                        ₹{selectedVariant?.final_price}
+                      </span>
 
-              <div className="w-full h-44 sm:h-52 md:h-60 bg-white flex items-center justify-center p-2 overflow-hidden">
+                      <span className="line-through text-gray-400 ml-2 text-sm">
+                        ₹{selectedVariant?.price}
+                      </span>
+                    </div>
 
-                <img
-                  src={
-                    selectedVariant?.image_url ||
-                    "https://via.placeholder.com/300"
-                  }
-                  alt={user.name}
-                  className="h-full w-full object-contain mix-blend-multiply group-hover:scale-105 transition duration-300"
-                />
-
-              </div>
-
-              {/* content */}
-
-              <div className="p-3 md:p-4">
-
-                {/* name */}
-
-                <h2 className="text-sm md:text-lg font-bold line-clamp-1">
-                  {user.name}
-                </h2>
-
-                {/* brand */}
-
-                <p className="text-xs md:text-sm text-gray-500 mt-1">
-                  {user.brand}
-                </p>
-
-                {/* category */}
-
-                <p className="text-[11px] md:text-xs text-gray-400">
-                  {user.category}
-                </p>
-
-                {/* price */}
-
-                <div className="mt-3">
-
-                  <div className="flex items-center gap-2 flex-wrap">
-
-                    <span className="text-lg md:text-2xl font-bold text-green-600">
-                      ₹{selectedVariant?.final_price}
-                    </span>
-
-                    <span className="line-through text-xs md:text-sm text-gray-400">
-                      ₹{selectedVariant?.price}
-                    </span>
-
-                  </div>
-
-                  <p className="text-red-500 text-xs font-semibold mt-1">
-                    {selectedVariant?.offer}% OFF
-                  </p>
-
-                </div>
-
-                {/* colors */}
-
-                <div className="mt-4">
-
-                  <h3 className="font-semibold text-xs md:text-sm mb-2">
-                    Colors
-                  </h3>
-
-                  <div className="flex gap-2 flex-wrap">
-
-                    {user.variant_set.map((variant) => (
-
-                      <button
-                        key={variant.id}
-                        onClick={() =>
-                          handleVariantChange(
-                            user.id,
-                            variant
-                          )
-                        }
-                        className={`
-                          px-2 py-1 text-xs rounded-lg border transition
-                          ${selectedVariant?.id === variant.id
-                            ? "bg-black text-white border-black"
-                            : "border-gray-300 hover:border-black"
+                    {/* VARIANTS */}
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {user.variant_set.map((variant) => (
+                        <button
+                          key={variant.id}
+                          onClick={() =>
+                            handleVariantChange(
+                              user.id,
+                              variant
+                            )
                           }
-                        `}
-                      >
-                        {variant.color_name}
+                          className={`px-2 py-1 text-xs rounded border transition ${
+                            selectedVariant?.id === variant.id
+                              ? "bg-black text-white"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          {variant.color_name}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* BUTTONS */}
+                    <div className="grid grid-cols-2 gap-2 mt-4">
+                      <button className="bg-yellow-400 hover:bg-yellow-500 py-2 rounded-lg text-sm font-semibold">
+                        Cart
                       </button>
 
-                    ))}
+                      <button className="bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-lg text-sm font-semibold">
+                        Wishlist
+                      </button>
+                    </div>
 
                   </div>
-
                 </div>
 
-                {/* size + stock */}
+                {/* CATEGORY SLIDER INJECTION (AMAZON STYLE) */}
+                {index === 7 && (
+                  <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4 w-full my-8">
+                    <CategorySlide />
+                  </div>
+                )}
 
-                <div className="flex items-center justify-between mt-4">
+                {index === 15 && (
+                  <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4 w-full my-8">
+                    <CategorySlide />
+                  </div>
+                )}
 
-                  <p className="text-xs md:text-sm text-gray-500">
-                    Size:
-                    <span className="font-bold ml-1">
-                      {selectedVariant?.size_name}
-                    </span>
-                  </p>
+              </Fragment>
+            );
+          })}
 
-                  {selectedVariant?.stock > 0 ? (
-                    <p className="text-green-600 text-xs font-medium">
-                      In Stock
-                    </p>
-                  ) : (
-                    <p className="text-red-500 text-xs font-medium">
-                      Out
-                    </p>
-                  )}
-
-                </div>
-
-                {/* buttons */}
-
-                <div className="grid grid-cols-2 gap-2 mt-4">
-
-                  <button className="bg-yellow-400 hover:bg-yellow-500 py-2 rounded-xl font-semibold transition text-xs md:text-sm">
-                    Add Cart
-                  </button>
-
-                  <button className="bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-xl font-semibold transition text-xs md:text-sm">
-                    Wishlist
-                  </button>
-
-                </div>
-
-              </div>
-
-            </div>
-          );
-        })}
-
+        </div>
       </div>
-
     </div>
   );
 }
