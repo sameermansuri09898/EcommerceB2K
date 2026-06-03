@@ -336,24 +336,36 @@ class AddToCartView(APIView):
 class Viewcart(APIView):
   permission_classes=[IsAuthenticated]
   authentication_classes=[JWTAuthentication]
-  def get(self,request):
-    timeout=60*15
-    cache_key=f"cache_page:{request.get_full_path()}:{request.user.id}"
-    cached_response=cache.get(cache_key)
+  def get(self, request):
+    timeout = 60 * 15
+
+    cache_key = f"cache_page:{request.get_full_path()}:{request.user.id}"
+    cached_response = cache.get(cache_key)
+
     if cached_response:
-      return Response(cached_response,status=status.HTTP_200_OK)  
-    cart=Addcart.objects.filter(user=request.user,is_cart=True)
-    serializer=AddToCartSerializer(cart,many=True)
-    cache.set(cache_key,serializer.data,timeout)
-    return Response(     
-        {
-            "message": "Cart",
-            "cart": serializer.data
-        },
-        status=status.HTTP_200_OK
+        return Response(cached_response, status=status.HTTP_200_OK)
+
+    cart_items = Addcart.objects.filter(user=request.user, is_cart=True)
+
+    serializer = AddToCartSerializer(cart_items, many=True)
+
+    # ✅ TOTAL PRICE CALCULATION (SAFE)
+    total_price = sum(
+        float(item.discounted_price) * item.quantity
+        for item in cart_items
     )
 
-  def update(self,request):
+    response_data = {
+        "message": "Cart",
+        "cart": serializer.data,
+        "total_price": total_price
+    }
+
+    cache.set(cache_key, response_data, timeout)
+
+    return Response(response_data, status=status.HTTP_200_OK)
+
+  def update(self,request,pk=None):
     cart_id=int(request.data.get('cart_id'))
     quantity=int(request.data.get('quantity'))
     images=request.FILES.get('images')
@@ -402,7 +414,7 @@ class Viewcart(APIView):
         status=status.HTTP_200_OK
     ) 
 
-  def delete(self,request):
+  def delete(self,request,pk=None):
     cart_id=request.data.get('cart_id')
     try:
       cart=Addcart.objects.get(id=cart_id)
@@ -443,6 +455,7 @@ class OfferOrders(APIView):
         return Response(serial.data)
     
 class Categoriesdata(APIView):
+   permission_classes =[AllowAny]
    def get(self,request):
       data=Categoriesvarient.objects.all().order_by('id')
       serializer=catdataSerializer(data,many=True)
