@@ -244,8 +244,8 @@ export default function ProductCards() {
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
-      {/* ── Sticky header ── */}
-      <div className="bg-white border-b border-slate-200 px-6 md:px-8 py-4 flex items-center justify-between sticky top-0 z-40">
+      {/* ── Sticky header ── */} 
+      <div className="bg-white border-b border-slate-200 px-6 md:px-8 py-4 flex items-center justify-between sticky top-0 z-40 max-w-7xl mx-auto">
         <div>
           <h1 className="text-xl font-extrabold text-slate-900 tracking-tight m-0" style={{ fontFamily: "'Syne', sans-serif" }}>
             All Products
@@ -362,10 +362,13 @@ export default function ProductCards() {
 
           {/* Grid / List */}
           {!loading && !error && filtered.length > 0 && (
-            <div className={viewMode === "list"
-              ? "flex flex-col gap-4"
-              : "grid gap-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-            }>
+           <div
+  className={
+    viewMode === "list"
+      ? "flex flex-col gap-2"
+      : "grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+  }
+>
               {filtered.map(product => {
                 const variant  = selectedVariants[product.id];
                 const discount = variant?.price && variant?.final_price
