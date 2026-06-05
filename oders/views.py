@@ -6,18 +6,18 @@ from .models import Product,variant,Addcart,Categoriesvarient
 from .productserializer import ProductSerializer,catdataSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets
-
+import traceback
 from django.db import transaction
 from sellerdash.permission import SellerPermission
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.core.cache import cache
 from.productserializer import VarientProductSerializer
-from .cartseralizer import AddToCartSerializer
+from .cartseralizer import AddToCartRequestSerializer,AddToCartResponseSerializer
 from rest_framework.permissions import AllowAny
 from rest_framework import serializers
 from rest_framework.views import APIView
 from django.db.models import Prefetch
-from .cartseralizer import AddToCartSerializer
+from decimal import Decimal
 
 
 class productViewSet(viewsets.ModelViewSet):
@@ -247,199 +247,185 @@ class Userproductlistview(generics.ListAPIView):
 
 class AddToCartView(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JWTAuthentication] 
-    def post(self,request):
-      product_id= int(request.data.get('product_item'))
-      variant_id= int(request.data.get('product_varient'))
-      quantity= int(request.data.get('quantity',1))
+    authentication_classes = [JWTAuthentication]
 
-      
-      serializer=AddToCartSerializer(data=request.data)
-      if not serializer.is_valid():
-        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
 
       try:
-        product=Product.objects.get(id=product_id)
-      except Product.DoesNotExist:
-        return Response(
-            {
-                "message": "Product not found"
-            },
-            status=status.HTTP_404_NOT_FOUND
-        )   
-      try:
-        product_variant=variant.objects.get(id=variant_id,product=product)
-      except variant.DoesNotExist:
-        return Response(
-            {
-                "message": "Variant not found"
-            },
-            status=status.HTTP_404_NOT_FOUND
+        # ----------------------------
+        # 1. Validate request only
+        # ----------------------------
+        serializer = AddToCartRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        product_id = serializer.validated_data['product_item']
+        variant_id = serializer.validated_data['product_varient']
+        quantity = serializer.validated_data['quantity']
+
+        # ----------------------------
+        # 2. Get product
+        # ----------------------------
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"message": "Product not found"}, status=404)
+
+        # ----------------------------
+        # 3. Get variant
+        # ----------------------------
+        try:
+            product_variant = variant.objects.get(id=variant_id, product=product)
+        except variant.DoesNotExist:
+            return Response({"message": "Variant not found"}, status=404)
+
+        # ----------------------------
+        # 4. Stock checks
+        # ----------------------------
+        if not product_variant.is_available:
+            return Response({"message": "Stock is unavailable"}, status=400)
+
+        if product_variant.stock < quantity:
+            return Response({"message": "Insufficient stock"}, status=400)
+
+        # ----------------------------
+        # 5. Price calculation (SERVER SIDE ONLY)
+        # ----------------------------
+        total_price = product_variant.final_price() * quantity
+        discounted_price = product_variant.offer_price() * quantity
+        amount_saved = (
+            (product_variant.price - product_variant.offer_price())
+            * quantity
         )
+
+        # ----------------------------
+        # 6. Cart update or create
+        # ----------------------------
+        cart_item, created = Addcart.objects.get_or_create(
+            user=request.user,
+            product_item=product,
+            product_varient=product_variant,
+            defaults={
+                "quantity": quantity,
+                "total_price": total_price,
+                "discounted_price": discounted_price,
+                "amount_saved": amount_saved,
+                "is_cart": True
+            }
+        )
+
+        if not created:
+            cart_item.quantity += quantity
+            cart_item.total_price += total_price
+            cart_item.discounted_price += discounted_price
+            cart_item.amount_saved += amount_saved
+            cart_item.save()
+
+        # ----------------------------
+        # 7. Response
+        # ----------------------------
+        response_serializer = AddToCartResponseSerializer(cart_item)
+
       
-      if product_variant.is_available==False:
-        return Response(
-            {
-                "message": "Stock is unavailable"
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )
-      if product_variant.stock<quantity:
-        return Response(
-            {
-                "message": "Stock is less than quantity"
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )
+      except Exception as e:
+            print(traceback.format_exc())
+            return Response({"error": str(e)}, status=500)
 
-      total_price=product_variant.final_price()*quantity
-      discounted_price=product_variant.offer_price()*quantity
-      amount_saved = (
-            product_variant.price - product_variant.offer_price()
-            ) * quantity    
-
-      cart_item=Addcart.objects.filter(user=request.user,product_item=product_id,product_varient=variant_id).first()
-      if cart_item:
-        cart_item.quantity+=quantity
-        cart_item.total_price+=total_price
-        cart_item.discounted_price+=discounted_price
-        cart_item.amount_saved+=amount_saved
-        cart_item.images=product_variant.images
-        cart_item.save()
-        return Response(
+      return Response(
             {
-                "message": "Updated cart",
-                "cart_id": cart_item.id
+                "message": "Cart updated successfully",
+                "data": response_serializer.data
             },
             status=status.HTTP_200_OK
+        ) 
+class ViewCart(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request):
+
+        cache_key = f"cart:{request.user.id}"
+        cached = cache.get(cache_key)
+
+        if cached:
+            return Response(cached, status=200)
+
+        cart_items = Addcart.objects.filter(user=request.user, is_cart=True)
+
+        serializer = AddToCartResponseSerializer(cart_items, many=True)
+
+        total_price = sum(
+            float(item.total_price)
+            for item in cart_items
         )
-      else:
-        Addcart.objects.create(
-            user=request.user.id,
-            product_item=product.id,
-            product_varient=product_variant.id,
-            quantity=quantity,
-            total_price=total_price,
-            discounted_price=discounted_price,
-            amount_saved=amount_saved,
-            images=product_variant.images,
-            is_cart=True
-        )
+
+        data = {
+            "cart": serializer.data,
+            "total_price": total_price
+        }
+
+        cache.set(cache_key, data, 300)
+
+        return Response(data, status=200)
+class UpdateCart(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def patch(self, request):
+
+        cart_id = request.data.get("cart_id")
+        quantity = int(request.data.get("quantity", 1))
+
+        try:
+            cart = Addcart.objects.get(id=cart_id, user=request.user)
+        except Addcart.DoesNotExist:
+            return Response({"message": "Cart not found"}, status=404)
+
+        if quantity <= 0:
+            cart.delete()
+            return Response({"message": "Deleted"}, status=200)
+
+        if cart.product_varient.stock < quantity:
+            return Response({"message": "Insufficient stock"}, status=400)
+
+        price = Decimal(str(cart.product_varient.final_price()))
+        offer_price = Decimal(str(cart.product_varient.offer_price()))
+
+        cart.quantity = quantity
+        cart.total_price = price * quantity
+        cart.discounted_price = offer_price * quantity
+        cart.amount_saved = (price - offer_price) * quantity
+
+        cart.save()
+
+        return Response({"message": "Cart updated"}, status=200)  
+class DeleteCartItemView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def delete(self, request):
+
+        cart_id = request.data.get("cart_id")
+
+        if not cart_id:
+            return Response(
+                {"message": "cart_id is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            cart_item = Addcart.objects.get(id=cart_id, user=request.user)
+        except Addcart.DoesNotExist:
+            return Response(
+                {"message": "Cart item not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        cart_item.delete()
+
         return Response(
-            {
-                "message": "Added to cart",
-                "cart_id": Addcart.objects.last().id
-            },
-            status=status.HTTP_201_CREATED
+            {"message": "Cart item deleted successfully"},
+            status=status.HTTP_200_OK
         )
-    
-class Viewcart(APIView):
-  permission_classes=[IsAuthenticated]
-  authentication_classes=[JWTAuthentication]
-  def get(self, request):
-    timeout = 60 * 15
-
-    cache_key = f"cache_page:{request.get_full_path()}:{request.user.id}"
-    cached_response = cache.get(cache_key)
-
-    if cached_response:
-        return Response(cached_response, status=status.HTTP_200_OK)
-
-    cart_items = Addcart.objects.filter(user=request.user, is_cart=True)
-
-    serializer = AddToCartSerializer(cart_items, many=True)
-
-    # ✅ TOTAL PRICE CALCULATION (SAFE)
-    total_price = sum(
-        float(item.discounted_price) * item.quantity
-        for item in cart_items
-    )
-
-    response_data = {
-        "message": "Cart",
-        "cart": serializer.data,
-        "total_price": total_price
-    }
-
-    cache.set(cache_key, response_data, timeout)
-
-    return Response(response_data, status=status.HTTP_200_OK)
-
-  def update(self,request,pk=None):
-    cart_id=int(request.data.get('cart_id'))
-    quantity=int(request.data.get('quantity'))
-    images=request.FILES.get('images')
-    if quantity<=0:
-      Addcart.objects.filter(id=cart_id).delete()
-      return Response(
-          {
-              "message": "Cart deleted successfully"
-          },
-          status=status.HTTP_200_OK
-      )      
-    try:
-      cart=Addcart.objects.get(id=cart_id)
-    except Addcart.DoesNotExist:
-      return Response(
-          {
-              "message": "Cart not found"
-          },
-          status=status.HTTP_404_NOT_FOUND
-      )
-    if cart.product_item.user != request.user:
-      return Response(
-          {
-              "message": "You are not authorized to update this cart"
-          },
-          status=status.HTTP_403_FORBIDDEN
-      )
-    if cart.product_varient.stock<quantity:
-      return Response(
-          {
-              "message": "Stock is less than quantity"
-          },
-          status=status.HTTP_400_BAD_REQUEST
-      )    
-    cart.quantity+=quantity
-    cart.total_price+=cart.product_varient.final_price()*quantity
-    cart.discounted_price+=cart.product_varient.offer_price()*quantity
-    cart.amount_saved+=(cart.product_varient.price-cart.product_varient.offer_price())*quantity
-    cart.images=images
-    cart.save()
-    return Response(
-        {
-            "message": "Updated cart",
-            "cart_id": cart.id
-        },
-        status=status.HTTP_200_OK
-    ) 
-
-  def delete(self,request,pk=None):
-    cart_id=request.data.get('cart_id')
-    try:
-      cart=Addcart.objects.get(id=cart_id)
-    except Addcart.DoesNotExist:
-      return Response(
-          {
-              "message": "Cart not found"
-          },
-          status=status.HTTP_404_NOT_FOUND
-      )
-    if cart.product_item.user != request.user:
-      return Response(
-          {
-              "message": "You are not authorized to delete this cart"
-          },
-          status=status.HTTP_403_FORBIDDEN
-      )
-    cart.delete()
-    return Response(
-        {
-            "message": "Cart deleted successfully"
-        },
-        status=status.HTTP_200_OK
-    )
-
 class OfferOrders(APIView):
 
     def get(self, request):

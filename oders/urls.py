@@ -14,9 +14,9 @@ router.register('variant',views.ProductVraientViewSet, basename='variant')
 urlpatterns=[
   path('productlist/',views.ProductAndVariantListView.as_view(),name='product_and_variant_list'),
   path('addcart/',views.AddToCartView.as_view(),name='addcart'),
-  path('viewcart/',views.Viewcart.as_view(),name='viewcart'),
-  path('updatecart/<int:pk>/',views.Viewcart.as_view(),name='updatecart'),
-  path('deletecart/<int:pk>',views.Viewcart.as_view(),name='deletecart'), 
+  path('viewcart/',views.ViewCart.as_view(),name='viewcart'),
+  path('deletecart/', views.DeleteCartItemView.as_view(), name='deletecart'),
+  path('updatecart/',views.UpdateCart.as_view(),name='updatecart'),
   path('Retreave_product/<int:pk>/', views.ProductDetailView.as_view(), name='get_cart_details'),
 
   # categories data

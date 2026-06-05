@@ -46,6 +46,41 @@ const ListIcon = () => (
   </svg>
 );
 
+const token = localStorage.getItem("access");
+// api for cart add hoga isse 
+const addToCart = async (product, variant) => {
+  try {
+    const token = localStorage.getItem("access");
+
+    const response = await fetch(
+      "http://127.0.0.1:8000/api/addcart/",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          product_item: product.id,
+          product_varient: variant.id,
+        }),
+      }
+    );
+
+    const data = await response.json();
+    console.log("Status:", response.status);
+console.log("Response:", data);
+
+    if (!response.ok) {
+      console.error("API Error:", data);
+      return;
+    }
+
+    console.log("Added to cart:", data);
+  } catch (error) {
+    console.error("Request Failed:", error);
+  }
+};
 // ── Filter Accordion ──────────────────────────────────────────
 function FilterSection({ title, children, defaultOpen = true }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -450,7 +485,7 @@ export default function ProductCards() {
 
                       {/* Buttons */}
                       <div className="flex gap-2 mt-auto">
-                        <button
+                        <button onClick={() => addToCart(product, variant)}
                           className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-slate-900 bg-white text-slate-900 text-xs font-bold cursor-pointer hover:bg-slate-900 hover:text-white transition-colors">
                           <CartIcon /> Add to Cart
                         </button>

@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from .models import Coupons
 from decimal import Decimal
 from django.utils import timezone
+from oders.models import Addcart
 
 
 
@@ -36,46 +37,45 @@ class CouponCreateView(APIView):
 
 
 class ApplyCoupon(APIView):
-  permission_classes=[IsAuthenticated]
-  authentication_classes=[JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
-  def post(self,request):
-      coupon_code=request.data.get("coupon")
-      total_cart=request.data.get("cart")
-      if not coupon_code or not total_cart:
-            return Response(
-                {"message": "Coupon and cart amount required"},
-                status=status.HTTP_400_BAD_REQUEST
+    def post(self, request):
+        code = request.data.get("coupon")
+
+        if not code:
+            return Response({"message": "Coupon required"}, status=400)
+
+        try:
+            coupon = Coupons.objects.get(
+                coupon=code,   # ✅ FIX HERE
+                Is_active=True
             )
-      try:
-       coupon_data = Coupons.objects.get(coupon=coupon_code)
-      except Coupons.DoesNotExist:
-       return Response({
-        "mssg":"Coupons is Not Found",
-        "Status":status.HTTP_400_BAD_REQUEST
-      })
+        except Coupons.DoesNotExist:
+            return Response({"message": "Invalid coupon"}, status=400)
 
-      valid_coupon,message = coupon_data.valid_coupon(
-         request.user,
-         Decimal(total_cart)
-      )
-      if not valid_coupon:
-         return Response(
-                {"message": message},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-      
-      discount_amount = (
-            Decimal(total_cart) * coupon_data.Discount
-        ) / Decimal("100")
-      
-      final_amount=Decimal(total_cart) - discount_amount
+        # Optional validation
+        now = timezone.now()
 
-      return Response({
-            "message": message,
-            "discount": discount_amount,
+        if coupon.valid_from and coupon.valid_from > now:
+            return Response({"message": "Coupon not active yet"}, status=400)
+
+        if coupon.valid_to and coupon.valid_to < now:
+            return Response({"message": "Coupon expired"}, status=400)
+
+        cart = Addcart.objects.filter(user=request.user)
+
+        cart_total = sum(item.total_price for item in cart)
+
+        if cart_total < coupon.min_oder_value:
+            return Response({
+                "message": f"Minimum order is {coupon.min_oder_value}"
+            }, status=400)
+
+        discount = (cart_total * coupon.Discount) / 100
+        final_amount = cart_total - discount
+
+        return Response({
+            "message": "Coupon applied",
+            "discount": discount,
             "final_amount": final_amount
         })
-
-       
-

@@ -116,4 +116,4 @@ class Addcart(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.product_item.name 
+     return self.product_item.name if self.product_item else "Cart Item" 
