@@ -76,10 +76,11 @@ class ProductSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Description cannot be less than 10 characters")
         return value
 
-    def validate_category(self,value):
-        if len(value)<3:
-            raise serializers.ValidationError("Category cannot be less than 3 characters")
-        return value
+    def validate_category(self, value):
+    # value ek Category instance hai
+     if not value:
+        raise serializers.ValidationError("Category is required.")
+     return value
         
     def create(self, validated_data):
         product=Product.objects.create(**validated_data)
@@ -90,12 +91,15 @@ class catdataSerializer(serializers.ModelSerializer):
         model=Categoriesvarient
         fields='__all__'
 
-   
+class SizeVariantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = sizevarient
+        fields = "__all__"
 
- 
-
-    
-    
+class ColorVariantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = colorvarient
+        fields = "__all__"        
 
 
     

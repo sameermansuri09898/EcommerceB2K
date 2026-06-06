@@ -14,6 +14,7 @@ import Login from "./components/credentials/login";
 import OfferProducts from './components/banners/offerpr'
 import Cart from './components/odders/cart'
 import Categories from './components/categories/swipercat'
+import AddProduct from './components/sellercredentials/addproduct'
 
 
 export default function App() {
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="/verify-otp" element={<VerifyOTP />} />
 
         <Route path="/Cart" element={<Cart />} />
+        <Route path="/seller/add-product" element={<AddProduct />} />
 
       </Routes>
 <Footer/>

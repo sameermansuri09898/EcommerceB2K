@@ -1,448 +1,429 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
-  Menu,
-  X,
-  ShoppingCart,
-  User,
-  Heart,
-  LogOut,
-  Home,
-  Search,
+  Menu, X, ShoppingCart, User, Heart, LogOut,
+  Home, Search, MapPin, Package, ChevronDown,
+  Zap, Tag, TrendingUp, Shield,
 } from "lucide-react";
-import { useNavigate, useLocation,Link } from "react-router-dom";
-
+import { useNavigate, Link } from "react-router-dom";
 import Asso from "./asso";
 
-const Nav = () => {
+const API_BASE = "http://127.0.0.1:8000";
 
-  const access = localStorage.getItem("access");
-  console.log(access)
-  
- 
-  const [mobileMenu, setMobileMenu] = useState(false);
-  const [userPopup, setUserPopup] = useState(false);
-
-  // auth demo
-    const navigate = useNavigate();
-  const isAuthenticated = true;
-
-  const popupRef = useRef();
-
-  // close popup outside click
-  useEffect(() => {
-    const handler = (e) => {
-      if (!popupRef.current?.contains(e.target)) {
-        setUserPopup(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handler);
-
-    return () => {
-      document.removeEventListener("mousedown", handler);
-    };
-  }, []);
-
-  // logout api 
-const handleLogout = async () => {
-
+/* ─────────────────────────────────────────
+   TOKEN UTILITIES
+───────────────────────────────────────── */
+function isTokenExpired(token) {
+  if (!token) return true;
   try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    // exp is in seconds, Date.now() in ms
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+}
 
-    const refresh = localStorage.getItem("refresh");
-
-    await axios.post(
-      "http://127.0.0.1:8000/api/logout/",
-      {
-        refresh_token: refresh,
-      }
-    );
-
-  } catch (error) {
-
-    console.log(error.response?.data);
-
-  } finally {
-
+function getValidToken() {
+  const token = localStorage.getItem("access");
+  if (isTokenExpired(token)) {
+    // Clear stale tokens silently
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
-
-    navigate("/login");
-
-    window.location.reload();
+    return null;
   }
-};
+  return token;
+}
+
+/* ─────────────────────────────────────────
+   NAV LINK DATA
+───────────────────────────────────────── */
+const NAV_LINKS = [
+  { label: "Home", href: "/", icon: Home },
+  { label: "Shop", href: "/shop", icon: Tag },
+  { label: "Trending", href: "/trending", icon: TrendingUp },
+  { label: "Top Deals", href: "/deals", icon: Zap },
+];
+
+const DROPDOWN_LINKS = [
+  { label: "Accessories", dropdown: true },
+];
+
+/* ─────────────────────────────────────────
+   USER MENU POPUP
+───────────────────────────────────────── */
+function UserMenu({ isAuth, onLogout, onClose }) {
+  const navigate = useNavigate();
+
+  const go = (path) => { navigate(path); onClose(); };
 
   return (
-    <div className="bg-gray-100  relative">
-
-      {/* NAVBAR */}
-      <header className="bg-white shadow-md sticky top-0 z-[999] overflow-visible">
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-5 py-4 flex items-center justify-between">
-
-          {/* LOGO */}
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold cursor-pointer">
-              Speed<span className="text-indigo-600">XS</span>
-            </h1>
+    <div className="absolute right-0 top-[calc(100%+12px)] w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[9999] animate-fadeSlideDown">
+      {/* Header */}
+      <div className={`px-5 py-4 ${isAuth ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white" : "bg-gray-50"}`}>
+        {isAuth ? (
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-lg">
+              S
+            </div>
+            <div>
+              <p className="font-semibold text-base leading-tight">Hello, Sameer 👋</p>
+              <p className="text-indigo-200 text-xs">Manage your account</p>
+            </div>
           </div>
+        ) : (
+          <>
+            <p className="font-semibold text-gray-800 text-base">Welcome 👋</p>
+            <p className="text-gray-500 text-xs mt-0.5">Login to access your account</p>
+          </>
+        )}
+      </div>
 
-          {/* DESKTOP MENU */}
-          <nav className="hidden lg:flex items-center gap-8">
-
-            <div className="relative group">
-              <button className="hover:text-indigo-600 font-medium transition">
-                Accessories
-              </button>
-
-              <Asso />
-            </div>
-
-            <div className="relative group">
-              <button className="hover:text-indigo-600 font-medium transition">
-                Trending
-              </button>
-
-              <Asso />
-            </div>
-
-            <div className="relative group">
-              <button className="hover:text-indigo-600 font-medium transition">
-                Top Deals
-              </button>
-
-              <Asso />
-            </div>
-
-            <a
-              href="#"
-              className="hover:text-indigo-600 transition font-medium"
-            >
-              Home
-            </a>
-
-            <a
-              href="#"
-              className="hover:text-indigo-600 transition font-medium"
-            >
-              Shop
-            </a>
-          </nav>
-
-          {/* RIGHT ICONS */}
-          <div className="hidden md:flex items-center gap-5">
-
-            {/* USER POPUP */}
-            <div className="relative isolate" ref={popupRef}>
-
+      <div className="p-2">
+        {isAuth ? (
+          <>
+            {[
+              { icon: User, label: "My Profile", path: "/profile" },
+              { icon: Package, label: "My Orders", path: "/orders" },
+              { icon: MapPin, label: "Saved Addresses", path: "/address" },
+              { icon: Heart, label: "Wishlist", path: "/wishlist" },
+            ].map(({ icon: Icon, label, path }) => (
               <button
-                onClick={() => setUserPopup(!userPopup)}
-                className="hover:text-indigo-600 transition cursor-pointer"
+                key={label}
+                onClick={() => go(path)}
+                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-gray-50 transition text-sm text-gray-700 font-medium group"
               >
-                <User size={22} />
+                <span className="w-8 h-8 rounded-lg bg-gray-100 group-hover:bg-indigo-100 flex items-center justify-center transition">
+                  <Icon size={15} className="text-gray-500 group-hover:text-indigo-600" />
+                </span>
+                {label}
+              </button>
+            ))}
+
+            <div className="border-t border-gray-100 my-1" />
+
+            <button
+              onClick={onLogout}
+              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-red-50 transition text-sm text-red-500 font-medium group"
+            >
+              <span className="w-8 h-8 rounded-lg bg-red-50 group-hover:bg-red-100 flex items-center justify-center transition">
+                <LogOut size={15} className="text-red-400" />
+              </span>
+              Logout
+            </button>
+          </>
+        ) : (
+          <div className="p-2 space-y-2">
+            <button
+              onClick={() => go("/login")}
+              className="w-full bg-indigo-600 text-white py-2.5 rounded-xl hover:bg-indigo-700 transition font-semibold text-sm"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => go("/register")}
+              className="w-full border border-indigo-200 text-indigo-600 py-2.5 rounded-xl hover:bg-indigo-50 transition font-semibold text-sm"
+            >
+              Create Account
+            </button>
+            <p className="text-center text-xs text-gray-400 flex items-center justify-center gap-1 pt-1">
+              <Shield size={11} /> Secure &amp; Trusted Platform
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   CART BADGE
+───────────────────────────────────────── */
+function CartBadge({ count, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="relative p-2 rounded-xl hover:bg-gray-100 transition text-gray-700 hover:text-indigo-600 group"
+      aria-label="Cart"
+    >
+      <ShoppingCart size={21} />
+      {count > 0 && (
+        <span className="absolute -top-0.5 -right-0.5 bg-indigo-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center leading-none">
+          {count > 9 ? "9+" : count}
+        </span>
+      )}
+    </button>
+  );
+}
+
+/* ─────────────────────────────────────────
+   MAIN NAV
+───────────────────────────────────────── */
+const Nav = () => {
+  const navigate = useNavigate();
+  const popupRef = useRef(null);
+
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [userPopup, setUserPopup] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [cartCount] = useState(2); // replace with real cart count from API/context
+
+  // Check auth on every render + listen for storage changes
+  const [isAuth, setIsAuth] = useState(() => !!getValidToken());
+
+  useEffect(() => {
+    const syncAuth = () => setIsAuth(!!getValidToken());
+    window.addEventListener("storage", syncAuth);
+    // Also re-check every 60s in case token expires while page is open
+    const interval = setInterval(syncAuth, 60_000);
+    return () => { window.removeEventListener("storage", syncAuth); clearInterval(interval); };
+  }, []);
+
+  // Close user popup on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (!popupRef.current?.contains(e.target)) setUserPopup(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Close mobile menu on resize to desktop
+  useEffect(() => {
+    const onResize = () => { if (window.innerWidth >= 768) setMobileOpen(false); };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  /* ── Logout ── */
+  const handleLogout = useCallback(async () => {
+    setUserPopup(false);
+    try {
+      const refresh = localStorage.getItem("refresh");
+      if (refresh) {
+        await axios.post(`${API_BASE}/api/logout/`, { refresh_token: refresh });
+      }
+    } catch (err) {
+      console.warn("Logout API error:", err?.response?.data);
+    } finally {
+      localStorage.removeItem("access");
+      localStorage.removeItem("refresh");
+      setIsAuth(false);
+      navigate("/login");
+    }
+  }, [navigate]);
+
+  /* ── Cart click ── */
+  const handleCart = () => navigate(isAuth ? "/Cart" : "/login");
+
+  /* ── Search submit ── */
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+  };
+
+  return (
+    <>
+      {/* Inject animation keyframes */}
+      <style>{`
+        @keyframes fadeSlideDown {
+          from { opacity: 0; transform: translateY(-8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeSlideDown { animation: fadeSlideDown 0.18s ease-out both; }
+      `}</style>
+
+      <div className="sticky top-0 z-[999] bg-white shadow-sm border-b border-gray-100">
+
+        {/* ── TOP BAR ── */}
+        <header className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+
+          {/* Logo */}
+          <Link to="/" className="flex-shrink-0 flex items-center gap-1 select-none">
+            <span className="text-2xl font-black tracking-tight text-gray-900">Speed</span>
+            <span className="text-2xl font-black tracking-tight text-indigo-600">XS</span>
+          </Link>
+
+          {/* Desktop Search (center) */}
+          <form
+            onSubmit={handleSearch}
+            className="hidden md:flex flex-1 max-w-xl mx-4 items-center border-2 border-gray-200 focus-within:border-indigo-500 rounded-full overflow-hidden transition-colors bg-white"
+          >
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search products, brands and more..."
+              className="flex-1 px-4 py-2.5 text-sm outline-none bg-transparent text-gray-800 placeholder-gray-400"
+            />
+            <button
+              type="submit"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 text-sm font-semibold flex items-center gap-1.5 transition-colors flex-shrink-0"
+            >
+              <Search size={15} />
+              <span className="hidden lg:block">Search</span>
+            </button>
+          </form>
+
+          {/* Desktop Right Icons */}
+          <div className="hidden md:flex items-center gap-1">
+
+            {/* User */}
+            <div className="relative" ref={popupRef}>
+              <button
+                onClick={() => setUserPopup((v) => !v)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-gray-100 transition text-sm font-medium ${userPopup ? "bg-gray-100 text-indigo-600" : "text-gray-700"}`}
+              >
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${isAuth ? "bg-indigo-600 text-white" : "bg-gray-200 text-gray-500"}`}>
+                  {isAuth ? "S" : <User size={14} />}
+                </div>
+                <span className="hidden lg:block">{isAuth ? "Account" : "Login"}</span>
+                <ChevronDown size={14} className={`hidden lg:block transition-transform ${userPopup ? "rotate-180" : ""}`} />
               </button>
 
               {userPopup && (
-                <div
-                  className="
-                    absolute right-0 top-14
-                    w-72
-                    bg-white
-                    rounded-2xl
-                    shadow-[0_10px_40px_rgba(0,0,0,0.15)]
-                    border
-                    overflow-hidden
-                    z-[9999]
-                  "
-                >
-
-                  {/* TOP */}
-                  <div className="p-5 border-b bg-gray-50">
-
-                    {isAuthenticated ? (
-                      <>
-                        <h2 className="font-semibold text-lg">
-                          Hello, Sameer 👋
-                        </h2>
-
-                        <p className="text-sm text-gray-500">
-                          Manage your account
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <h2 className="font-semibold text-lg">
-                          Welcome 👋
-                        </h2>
-
-                        <p className="text-sm text-gray-500">
-                          Login to access your account
-                        </p>
-                      </>
-                    )}
-
-                  </div>
-
-                  {/* MENU */}
-                  <div className="p-2 flex flex-col">
-
-                  {access ? (
-  <>
-    <button
-      className="
-        flex items-center gap-3
-        px-4 py-3 rounded-xl
-        hover:bg-gray-100
-        transition
-      "
-    >
-      <User size={18} />
-      My Profile
-    </button>
-
-    <button
-      onClick={() => navigate('/')}
-      className="
-        flex items-center gap-3
-        px-4 py-3 rounded-xl
-        hover:bg-gray-100
-        transition
-      "
-    >
-      <Home size={18} />
-      Add Address
-    </button>
-
-    <button
-      className="
-        flex items-center gap-3
-        px-4 py-3 rounded-xl
-        hover:bg-gray-100
-        transition
-      "
-    >
-      <Heart size={18} />
-      Wishlist
-    </button>
-
-    <button
-      onClick={handleLogout}
-      className="
-        flex items-center gap-3
-        px-4 py-3 rounded-xl
-        hover:bg-red-50
-        text-red-500
-        transition
-      "
-    >
-      <LogOut size={18} />
-      Logout
-    </button>
-  </>
-) : (
-  <>
-    <button
-      onClick={() => navigate('/login')}
-      className="
-        w-full bg-indigo-600
-        text-white py-3
-        rounded-xl
-        hover:bg-indigo-700
-        transition font-medium
-      "
-    >
-      Login
-    </button>
-
-    <button
-      onClick={() => navigate('/register')}
-      className="
-        mt-3 w-full
-        border border-indigo-600
-        text-indigo-600
-        py-3 rounded-xl
-        hover:bg-indigo-50
-        transition font-medium
-      "
-    >
-      Register
-    </button>
-  </>
-)}
-
-                  </div>
-                </div>
+                <UserMenu
+                  isAuth={isAuth}
+                  onLogout={handleLogout}
+                  onClose={() => setUserPopup(false)}
+                />
               )}
             </div>
 
-            {/* WISHLIST */}
-            <button className="hover:text-red-500 transition cursor-pointer">
-              <Heart size={22} />
+            {/* Wishlist */}
+            <button
+              onClick={() => navigate(isAuth ? "/wishlist" : "/login")}
+              className="p-2 rounded-xl hover:bg-gray-100 transition text-gray-700 hover:text-red-500"
+              aria-label="Wishlist"
+            >
+              <Heart size={21} />
             </button>
 
-            {/* CART */}
-          {access ?(  <button  onClick={() => navigate('/Cart')}
-            className="relative hover:text-indigo-600 transition cursor-pointer">
-
-              <ShoppingCart size={22} />
-
-              <span
-                className="
-                  absolute -top-2 -right-2
-                  bg-indigo-600 text-white
-                  text-xs w-5 h-5
-                  rounded-full
-                  flex items-center justify-center
-                "
-              >
-                2
-              </span>
-
-            </button>):(  <button  onClick={() => navigate('/login')}
-            className="relative hover:text-indigo-600 transition cursor-pointer">
-
-              <ShoppingCart size={22} />
-
-              <span
-                className="
-                  absolute -top-2 -right-2
-                  bg-indigo-600 text-white
-                  text-xs w-5 h-5
-                  rounded-full
-                  flex items-center justify-center
-                "
-              >
-                2
-              </span>
-
-            </button>)}
+            {/* Cart */}
+            <CartBadge count={isAuth ? cartCount : 0} onClick={handleCart} />
           </div>
 
-          {/* MOBILE MENU BUTTON */}
-          <button
-            className="md:hidden"
-            onClick={() => setMobileMenu(!mobileMenu)}
-          >
-            {mobileMenu ? <X size={28} /> : <Menu size={28} />}
-          </button>
+          {/* Mobile: cart + hamburger */}
+          <div className="flex md:hidden items-center gap-2">
+            <CartBadge count={isAuth ? cartCount : 0} onClick={handleCart} />
+            <button
+              onClick={() => setMobileOpen((v) => !v)}
+              className="p-2 rounded-xl hover:bg-gray-100 transition text-gray-700"
+              aria-label="Menu"
+            >
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
+        </header>
 
+        {/* ── DESKTOP NAV LINKS ── */}
+        <nav className="hidden lg:block border-t border-gray-100 bg-white">
+          <div className="max-w-7xl mx-auto px-6 flex items-center gap-1 h-11">
+            {NAV_LINKS.map(({ label, href }) => (
+              <Link
+                key={label}
+                to={href}
+                className="px-4 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 transition"
+              >
+                {label}
+              </Link>
+            ))}
+
+            {/* Accessories dropdown */}
+            <div className="relative group">
+              <button className="px-4 py-1.5 rounded-lg text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 transition flex items-center gap-1">
+                Accessories
+                <ChevronDown size={13} className="group-hover:rotate-180 transition-transform" />
+              </button>
+              <div className="absolute top-full left-0 pt-2 hidden group-hover:block z-50">
+                <Asso />
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        {/* ── MOBILE SEARCH ── */}
+        <div className="md:hidden px-4 pb-3 pt-1">
+          <form
+            onSubmit={handleSearch}
+            className="flex items-center border border-gray-200 focus-within:border-indigo-500 rounded-full overflow-hidden transition-colors bg-gray-50"
+          >
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search products..."
+              className="flex-1 px-4 py-2.5 text-sm outline-none bg-transparent text-gray-800 placeholder-gray-400"
+            />
+            <button
+              type="submit"
+              className="bg-indigo-600 text-white px-4 py-2.5 flex items-center justify-center"
+            >
+              <Search size={16} />
+            </button>
+          </form>
         </div>
 
-        {/* MOBILE MENU */}
-        {mobileMenu && (
-          <div
-            className="
-              md:hidden
-              bg-white
-              border-t
-              shadow-lg
-              px-5 py-5
-              space-y-5
-              z-[999]
-              relative
-            "
-          >
+        {/* ── MOBILE MENU PANEL ── */}
+        {mobileOpen && (
+          <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 space-y-1 shadow-lg animate-fadeSlideDown">
 
-            <a href="#" className="block font-medium">
-              Home
-            </a>
+            {/* Auth section */}
+            {isAuth ? (
+              <div className="flex items-center gap-3 px-3 py-3 mb-3 bg-indigo-50 rounded-xl">
+                <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-base">S</div>
+                <div>
+                  <p className="font-semibold text-gray-800 text-sm">Sameer</p>
+                  <p className="text-xs text-gray-500">View account</p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-2 mb-3">
+                <button onClick={() => { navigate("/login"); setMobileOpen(false); }}
+                  className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold">Login</button>
+                <button onClick={() => { navigate("/register"); setMobileOpen(false); }}
+                  className="flex-1 border border-indigo-200 text-indigo-600 py-2.5 rounded-xl text-sm font-semibold">Register</button>
+              </div>
+            )}
 
-            <a href="#" className="block font-medium">
-              Accessories
-            </a>
+            {/* Nav links */}
+            {NAV_LINKS.map(({ label, href, icon: Icon }) => (
+              <Link
+                key={label}
+                to={href}
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition"
+              >
+                <Icon size={17} className="text-gray-400" />
+                {label}
+              </Link>
+            ))}
+            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition">
+              <Tag size={17} className="text-gray-400" /> Accessories
+            </button>
 
-            <a href="#" className="block font-medium">
-              Trending
-            </a>
-
-            <a href="#" className="block font-medium">
-              Top Deals
-            </a>
-
-            <a href="#" className="block font-medium">
-              Shop
-            </a>
-
-            {/* MOBILE ICONS */}
-            <div className="flex items-center gap-6 pt-4 border-t">
-
-              <button>
-                <User size={22} />
-              </button>
-
-              <button>
-                <Heart size={22} />
-              </button>
-
-              <button className="relative">
-
-                <ShoppingCart size={22} />
-
-                <span
-                  className="
-                    absolute -top-2 -right-2
-                    bg-indigo-600 text-white
-                    text-xs w-5 h-5
-                    rounded-full
-                    flex items-center justify-center
-                  "
-                >
-                  2
-                </span>
-
-              </button>
-            </div>
-
+            {/* Bottom icons */}
+            {isAuth && (
+              <>
+                <div className="border-t border-gray-100 my-2" />
+                <button onClick={() => { navigate("/wishlist"); setMobileOpen(false); }}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition w-full">
+                  <Heart size={17} className="text-gray-400" /> Wishlist
+                </button>
+                <button onClick={() => { navigate("/orders"); setMobileOpen(false); }}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition w-full">
+                  <Package size={17} className="text-gray-400" /> My Orders
+                </button>
+                <button onClick={handleLogout}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition w-full">
+                  <LogOut size={17} /> Logout
+                </button>
+              </>
+            )}
           </div>
         )}
-      </header>
-
-      {/* SEARCH BAR */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-5 mt-2 pb-1">
-
-        <div
-          className="
-            flex items-center
-            border border-gray-300
-            rounded-full
-            overflow-hidden
-            bg-white
-            shadow-md
-          "
-        >
-
-          <input
-            type="text"
-            placeholder="Search products, brands and more..."
-            className="
-              w-full px-4 sm:px-5
-              py-3 text-sm
-              outline-none
-            "
-          />
-
-          <button
-            className="
-              bg-indigo-600 text-white
-              px-4 sm:px-6 py-3
-              hover:bg-indigo-700
-              transition
-              flex items-center gap-2
-            "
-          >
-            <Search size={18} />
-
-            <span className="hidden sm:block">
-              Search
-            </span>
-          </button>
-
-        </div>
       </div>
-
-    </div>
-    
+    </>
   );
 };
 

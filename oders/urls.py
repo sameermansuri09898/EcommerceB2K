@@ -22,6 +22,8 @@ urlpatterns=[
   # categories data
   path('Categoriesdata/',views.Categoriesdata.as_view(),name="catdata"),
   path('OfferOrders/',views.OfferOrders.as_view(),name="offerdata"),
+  path('VariantSizeView/',views.VariantSizeView.as_view(),name="VariantSizeView"),
+  path('VariantColorView/',views.VariantColorView.as_view(),name="VariantColorView"),
 
   
 ]

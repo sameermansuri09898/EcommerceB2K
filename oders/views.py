@@ -2,8 +2,8 @@ from django.shortcuts import render
 from rest_framework import generics,status
 from rest_framework.response import Response
 
-from .models import Product,variant,Addcart,Categoriesvarient
-from .productserializer import ProductSerializer,catdataSerializer
+from .models import Product,variant,Addcart,Categoriesvarient,colorvarient,sizevarient
+from .productserializer import ProductSerializer,catdataSerializer,SizeVariantSerializer,ColorVariantSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets
 import traceback
@@ -404,6 +404,9 @@ class DeleteCartItemView(APIView):
 
     def delete(self, request):
 
+        print("DATA:", request.data)
+        print("USER:", request.user)
+ 
         cart_id = request.data.get("cart_id")
 
         if not cart_id:
@@ -413,7 +416,10 @@ class DeleteCartItemView(APIView):
             )
 
         try:
-            cart_item = Addcart.objects.get(id=cart_id, user=request.user)
+            cart_item = Addcart.objects.get(
+                id=cart_id,
+                user=request.user
+            )
         except Addcart.DoesNotExist:
             return Response(
                 {"message": "Cart item not found"},
@@ -446,3 +452,23 @@ class Categoriesdata(APIView):
       data=Categoriesvarient.objects.all().order_by('id')
       serializer=catdataSerializer(data,many=True)
       return Response(serializer.data)
+   
+class VariantSizeView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request):
+        data = sizevarient.objects.all().order_by("id")
+        serializer = SizeVariantSerializer(data, many=True)
+        return Response(serializer.data)
+
+class VariantColorView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request):
+        data = colorvarient.objects.all().order_by("id")
+        serializer = ColorVariantSerializer(data, many=True)
+        return Response(serializer.data)
+
+
