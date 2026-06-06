@@ -244,112 +244,121 @@ class Userproductlistview(generics.ListAPIView):
       cache.set(cache_key,serializer.data,timeout)
       return Response(serializer.data,status=status.HTTP_200_OK)
 
-
 class AddToCartView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
     def post(self, request):
-
-      try:
-        # ----------------------------
-        # 1. Validate request only
-        # ----------------------------
-        serializer = AddToCartRequestSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        product_id = serializer.validated_data['product_item']
-        variant_id = serializer.validated_data['product_varient']
-        quantity = serializer.validated_data['quantity']
-
-        # ----------------------------
-        # 2. Get product
-        # ----------------------------
         try:
-            product = Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
-            return Response({"message": "Product not found"}, status=404)
+            # ----------------------------
+            # 1. Validate request only
+            # ----------------------------
+            serializer = AddToCartRequestSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
 
-        # ----------------------------
-        # 3. Get variant
-        # ----------------------------
-        try:
-            product_variant = variant.objects.get(id=variant_id, product=product)
-        except variant.DoesNotExist:
-            return Response({"message": "Variant not found"}, status=404)
+            product_id = serializer.validated_data['product_item']
+            variant_id = serializer.validated_data['product_varient']
+            quantity = serializer.validated_data['quantity']
 
-        # ----------------------------
-        # 4. Stock checks
-        # ----------------------------
-        if not product_variant.is_available:
-            return Response({"message": "Stock is unavailable"}, status=400)
+            # ----------------------------
+            # 2. Get product
+            # ----------------------------
+            try:
+                product = Product.objects.get(id=product_id)
+            except Product.DoesNotExist:
+                return Response({"message": "Product not found"}, status=404)
 
-        if product_variant.stock < quantity:
-            return Response({"message": "Insufficient stock"}, status=400)
+            # ----------------------------
+            # 3. Get variant
+            # ----------------------------
+            try:
+                product_variant = variant.objects.get(id=variant_id, product=product)
+            except variant.DoesNotExist:
+                return Response({"message": "Variant not found"}, status=404)
 
-        # ----------------------------
-        # 5. Price calculation (SERVER SIDE ONLY)
-        # ----------------------------
-        total_price = product_variant.final_price() * quantity
-        discounted_price = product_variant.offer_price() * quantity
-        amount_saved = (
-            (product_variant.price - product_variant.offer_price())
-            * quantity
-        )
+            # ----------------------------
+            # 4. Stock checks
+            # ----------------------------
+            if not product_variant.is_available:
+                return Response({"message": "Stock is unavailable"}, status=400)
 
-        # ----------------------------
-        # 6. Cart update or create
-        # ----------------------------
-        cart_item, created = Addcart.objects.get_or_create(
-            user=request.user,
-            product_item=product,
-            product_varient=product_variant,
-            defaults={
-                "quantity": quantity,
-                "total_price": total_price,
-                "discounted_price": discounted_price,
-                "amount_saved": amount_saved,
-                "is_cart": True
-            }
-        )
+            if product_variant.stock < quantity:
+                return Response({"message": "Insufficient stock"}, status=400)
 
-        if not created:
-            cart_item.quantity += quantity
-            cart_item.total_price += total_price
-            cart_item.discounted_price += discounted_price
-            cart_item.amount_saved += amount_saved
-            cart_item.save()
+            # ----------------------------
+            # 5. Price calculation (SERVER SIDE ONLY)
+            # ----------------------------
+            total_price = product_variant.final_price() * quantity
+            discounted_price = product_variant.offer_price() * quantity
+            amount_saved = (
+                (product_variant.price - product_variant.offer_price())
+                * quantity
+            )
 
-        # ----------------------------
-        # 7. Response
-        # ----------------------------
-        response_serializer = AddToCartResponseSerializer(cart_item)
+            # ----------------------------
+            # 6. Cart update or create
+            # ----------------------------
+            cart_item, created = Addcart.objects.get_or_create(
+                user=request.user,
+                product_item=product,
+                product_varient=product_variant,
+                defaults={
+                    "quantity": quantity,
+                    "total_price": total_price,
+                    "discounted_price": discounted_price,
+                    "amount_saved": amount_saved,
+                    "is_cart": True
+                }
+            )
 
-      
-      except Exception as e:
+            if not created:
+                cart_item.quantity += quantity
+                cart_item.total_price += total_price
+                cart_item.discounted_price += discounted_price
+                cart_item.amount_saved += amount_saved
+                cart_item.save()
+
+            # ----------------------------
+            # 🔥 CRITICAL FIX: Delete user's cart cache on new add/update
+            # ----------------------------
+            cache_key = f"cart:{request.user.id}"
+            cache.delete(cache_key)
+
+            # ----------------------------
+            # 7. Response Generation
+            # ----------------------------
+            response_serializer = AddToCartResponseSerializer(cart_item)
+            
+            return Response(
+                {
+                    "message": "Cart updated successfully",
+                    "data": response_serializer.data
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except Exception as e:
             print(traceback.format_exc())
             return Response({"error": str(e)}, status=500)
 
-      return Response(
-            {
-                "message": "Cart updated successfully",
-                "data": response_serializer.data
-            },
-            status=status.HTTP_200_OK
-        ) 
 class ViewCart(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
     def get(self, request):
-
         cache_key = f"cart:{request.user.id}"
         cached = cache.get(cache_key)
 
+        # Agar cache mein fresh data hai toh wahin se return karo
         if cached:
             return Response(cached, status=200)
 
-        cart_items = Addcart.objects.filter(user=request.user, is_cart=True)
+        # Aapka badla hua filter (product_item__isnull=False) jo deleted products ko rokega
+        cart_items = Addcart.objects.filter(
+            user=request.user, 
+            is_cart=True,
+            product_item__isnull=False
+        ).select_related('product_item') # Speed badhane ke liye select_related zaroor lagayein
 
         serializer = AddToCartResponseSerializer(cart_items, many=True)
 
@@ -363,14 +372,18 @@ class ViewCart(APIView):
             "total_price": total_price
         }
 
-        cache.set(cache_key, data, 300)
+        # Cache content for 5 minutes
+        cache.set(cache_key, data, 120)
 
         return Response(data, status=200)
+
 class UpdateCart(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
     def patch(self, request):
+        cache_key = f"cart:{request.user.id}"
+        cache.delete(cache_key)
 
         cart_id = request.data.get("cart_id")
         quantity = int(request.data.get("quantity", 1))
@@ -398,11 +411,14 @@ class UpdateCart(APIView):
         cart.save()
 
         return Response({"message": "Cart updated"}, status=200)  
+
 class DeleteCartItemView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
     def delete(self, request):
+        cache_key = f"cart:{request.user.id}"
+        cache.delete(cache_key)
 
         print("DATA:", request.data)
         print("USER:", request.user)
@@ -428,10 +444,12 @@ class DeleteCartItemView(APIView):
 
         cart_item.delete()
 
+
         return Response(
             {"message": "Cart item deleted successfully"},
             status=status.HTTP_200_OK
         )
+
 class OfferOrders(APIView):
 
     def get(self, request):
