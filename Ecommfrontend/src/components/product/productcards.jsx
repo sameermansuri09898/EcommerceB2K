@@ -280,7 +280,7 @@ export default function ProductCards() {
       `}</style>
 
       {/* ── Sticky header ── */} 
-      <div className="bg-white border-b border-slate-200 px-6 md:px-8 py-4 flex items-center justify-between sticky top-0 z-40 max-w-7xl mx-auto">
+      <div className="bg-white border-b border-slate-200 px-6 md:px-8 py-4 flex items-center justify-between sticky top-0 z-40  mx-auto">
         <div>
           <h1 className="text-xl font-extrabold text-slate-900 tracking-tight m-0" style={{ fontFamily: "'Syne', sans-serif" }}>
             All Products
@@ -348,7 +348,7 @@ export default function ProductCards() {
       )}
 
       {/* ── Main layout ── */}
-      <div className="max-w-screen-xl mx-auto px-4 md:px-6 py-6 flex gap-6 items-start">
+      <div className=" mx-auto px-4 md:px-6 py-6 flex gap-6 items-start">
 
         {/* ── Desktop sidebar ── */}
         <aside className="hidden md:block w-56 shrink-0 bg-white rounded-2xl border border-slate-200 p-5 sticky top-20 max-h-[calc(100vh-96px)] overflow-y-auto">
@@ -401,7 +401,7 @@ export default function ProductCards() {
   className={
     viewMode === "list"
       ? "flex flex-col gap-2"
-      : "grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+      : "grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 "
   }
 >
               {filtered.map(product => {

@@ -205,14 +205,12 @@ const deleteItem = async (itemId) => {
                     <div className="flex gap-4 sm:gap-6">
                       <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-50 rounded-md border border-gray-200 overflow-hidden flex-shrink-0">
                         <img
-                          src={item.product_image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=300&auto=format&fit=crop&q=60"}
+                        src={
+                          item.image 
+                          ? `http://127.0.0.1:8000${item.image}`
+                          : "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=300&auto=format&fit=crop&q=60"}
                           alt={item.product_name}
-                          className="w-full h-full object-contain object-center"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=300&auto=format&fit=crop&q=60";
-                          }}
-                        />
+                          className="w-full h-full object-cover"/>
                       </div>
 
                       <div className="flex flex-col justify-between">
