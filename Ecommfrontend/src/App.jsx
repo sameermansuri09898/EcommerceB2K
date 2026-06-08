@@ -15,7 +15,7 @@ import Login from "./components/credentials/login";
 import Cart from './components/odders/cart'
 import Categories from './components/categories/swipercat'
 import AddProduct from './components/sellercredentials/addproduct'
-
+import ProductPage from  './components/product/itemView'
 
 export default function App() {
   return (
@@ -35,6 +35,7 @@ export default function App() {
 
 {/* 
         <Route path="/OfferProducts" element={<OfferProducts />} /> */}
+        <Route path="/ProductPage/:id" element={<ProductPage />} />
 
         <Route path="/verify-otp" element={<VerifyOTP />} />
 

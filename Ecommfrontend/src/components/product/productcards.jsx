@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-
+import { useNavigate } from "react-router-dom";
 // ── No-image fallback ─────────────────────────────────────────
 const NO_IMG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f1f5f9'/%3E%3Ctext x='150' y='155' text-anchor='middle' font-size='13' fill='%2394a3b8' font-family='sans-serif'%3ENo Image%3C/text%3E%3C/svg%3E";
@@ -119,6 +119,8 @@ function PriceRange({ min, max, value, onChange }) {
 
 // ── Main Component ────────────────────────────────────────────
 export default function ProductCards() {
+   const navigate = useNavigate();
+
   const [products, setProducts]       = useState([]);
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState(null);
@@ -436,6 +438,7 @@ export default function ProductCards() {
                       <img
                         src={variant?.image_url || NO_IMG}
                         alt={product.name}
+                        onClick={() => navigate(`/ProductPage/${product.id}`)}
                         onError={e => { e.target.onerror = null; e.target.src = NO_IMG; }}
                         className="w-full h-full object-contain p-3 transition-transform duration-300 group-hover:scale-105"
                       />
@@ -446,7 +449,9 @@ export default function ProductCards() {
                       {/* Category + Brand */}
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">{product.categorie_name}</span>
-                        <span className="text-[10px] text-slate-500 font-medium">{product.brand}</span>
+                        <span className="text-[10px] text-slate-500 font-medium" onClick={() => navigate(`/ProductPage/${product.id}`)}>
+                          {product.brand}
+                        </span>
                       </div>
 
                       {/* Name */}
