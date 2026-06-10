@@ -16,6 +16,10 @@ import Cart from './components/odders/cart'
 import Categories from './components/categories/swipercat'
 import AddProduct from './components/sellercredentials/addproduct'
 import ProductPage from  './components/product/itemView'
+import Wishlist from './components/product/whislist.jsx'
+
+import Address from "./components/pages/Address";
+
 
 export default function App() {
   return (
@@ -32,6 +36,10 @@ export default function App() {
         <Route path="/register" element={<RegisterForm />} />
 
         <Route path="/login" element={<Login />} />
+        <Route
+          path="/address"
+          element={<Address />}
+        />
 
 {/* 
         <Route path="/OfferProducts" element={<OfferProducts />} /> */}
@@ -41,7 +49,7 @@ export default function App() {
 
         <Route path="/Cart" element={<Cart />} />
         <Route path="/seller/add-product" element={<AddProduct />} />
-
+        <Route path="/Wishlist" element={<Wishlist />} />
       </Routes>
 <Footer/>
     </BrowserRouter>

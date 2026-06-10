@@ -108,75 +108,166 @@ class Logout(APIView):
 """
 shipping address  
 """
-class ShippingAddresview(APIView):
-  permission_classes=[IsAuthenticated]
-  authentication_classes=[JWTAuthentication]
+class ShippingAddressCreate(APIView):
 
-  def post(self,request):
-    serializer=BuyerShippingSerializer(data=request.data,context={'request':request})
-    if serializer.is_valid():
-      serializer.save()
-      return Response({"message":"Shipping address created successfully"}, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request):
+
+        serializer = BuyerShippingSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response(
+                {
+                    "message": "Address created successfully"
+                },
+                status=status.HTTP_201_CREATED
+            )
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+class ShippingAddressList(APIView):
+
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get(self, request):
+
+        addresses = BuyerShipping.objects.filter(
+            user=request.user
+        ).order_by(
+            '-is_default',
+            '-created_at'
+        )
+
+        serializer = BuyerShippingSerializer(
+            addresses,
+            many=True
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
+class SetDefaultAddress(APIView):
+
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request, id):
+
+        address = BuyerShipping.objects.filter(
+            id=id,
+            user=request.user
+        ).first()
+
+        if not address:
+            return Response(
+                {"message": "Address not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        address.is_default = True
+        address.save()
+
+        return Response(
+            {"message": "Default address updated"},
+            status=status.HTTP_200_OK
+        )
+
+class ShippingAddressUpdate(APIView):
+
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def put(self, request, id):
+
+        address = BuyerShipping.objects.filter(
+            id=id,
+            user=request.user
+        ).first()
+
+        if not address:
+            return Response(
+                {"message": "Address not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = BuyerShippingSerializer(
+            address,
+            data=request.data,
+            partial=True
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response(
+                {
+                    "message": "Address updated successfully",
+                    "data": serializer.data
+                }
+            )
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
-class getshippingAddress(APIView):
+class ShippingAddressDelete(APIView):
 
-  permission_classes=[IsAuthenticated]
-  authentication_classes=[JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
-  def get(self,request):
-    shipping=BuyerShipping.objects.filter(user=request.user)
-    serializer=BuyerShippingSerializer(shipping,many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)  
+    def delete(self, request, id):
 
+        address = BuyerShipping.objects.filter(
+            id=id,
+            user=request.user
+        ).first()
 
-class setshippingAddress(APIView):
+        if not address:
+            return Response(
+                {"message": "Address not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
-  permission_classes=[IsAuthenticated]
-  authentication_classes=[JWTAuthentication]
+        address.delete()
 
-  @rate_limit(3,60*10)
-  def post(self,request,id):
-    user=request.user
-    shipping=BuyerShipping.objects.filter(id=id,user=user)
-    
-    if shipping is None:
-      return Response({"message":"Shipping address not found"}, status=status.HTTP_404_NOT_FOUND)
-    shipping.is_default=True
-    shipping.save()
-    return Response({"message":"Shipping address set successfully"}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": "Address deleted successfully"},
+            status=status.HTTP_200_OK
+      )
+class DefaultAddress(APIView):
 
-class updateshippingAddress(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
-  permission_classes=[IsAuthenticated]
-  authentication_classes=[JWTAuthentication]
+    def get(self, request):
 
-  def put(self,request,id):
-    user=request.user
-    shipping=BuyerShipping.objects.get(id=id,user=user)
-    
-    if shipping is None:
-      return Response({"message":"Shipping address not found"}, status=status.HTTP_404_NOT_FOUND)
-    
-    serializer=BuyerShippingSerializer(shipping,data=request.data,partial=True)
-    if serializer.is_valid():
-      serializer.save()
-      return Response({"message":"Shipping address updated successfully"}, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        address = BuyerShipping.objects.filter(
+            user=request.user,
+            is_default=True
+        ).first()
 
+        if not address:
+            return Response(
+                {"message": "No default address found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
-class deleteShippingAddress(APIView):
+        serializer = BuyerShippingSerializer(address)
 
-  permission_classes=[IsAuthenticated]
-  authentication_classes=[JWTAuthentication]
-
-  def delete(self,request,id):
-    user=request.user
-    shipping=BuyerShipping.objects.filter(id=id,user=user)
-    
-    if shipping is None:
-      return Response({"message":"Shipping address not found"}, status=status.HTTP_404_NOT_FOUND)
-    
-    shipping.delete()
-    return Response({"message":"Shipping address deleted successfully"}, status=status.HTTP_200_OK)    
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )

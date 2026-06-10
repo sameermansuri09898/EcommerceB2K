@@ -3,7 +3,7 @@ import axios from "axios";
 import {
   Menu, X, ShoppingCart, User, Heart, LogOut,
   Home, Search, MapPin, Package, ChevronDown,
-  Zap, Tag, TrendingUp, Shield,
+  Zap, Tag, TrendingUp, Shield, MapPinCheckInside
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import Asso from "./asso";
@@ -292,11 +292,20 @@ const Nav = () => {
 
             {/* Wishlist */}
             <button
-              onClick={() => navigate(isAuth ? "/wishlist" : "/login")}
-              className="p-2 rounded-xl hover:bg-gray-100 transition text-gray-700 hover:text-red-500"
+              onClick={() => navigate(isAuth ? "/Wishlist" : "/login")}
+              className="p-2 rounded-xl hover:bg-gray-100 transition text-gray-700 hover:text-red-500 cursor-pointer"
               aria-label="Wishlist"
             >
               <Heart size={21} />
+            </button>
+
+             {/* Address pin */}
+            <button
+              onClick={() => navigate(isAuth ? "/address" : "/login")}
+              className="p-2 rounded-xl hover:bg-gray-100 transition text-red-900 hover:text-red-500 cursor-pointer"
+              aria-label="Wishlist"
+            >
+              <MapPinCheckInside size={21} />
             </button>
 
             {/* Cart */}
@@ -308,7 +317,7 @@ const Nav = () => {
             <CartBadge count={isAuth ? cartCount : 0} onClick={handleCart} />
             <button
               onClick={() => setMobileOpen((v) => !v)}
-              className="p-2 rounded-xl hover:bg-gray-100 transition text-gray-700"
+              className="p-2 rounded-xl hover:bg-gray-100 transition text-gray-700 cursor-pointer"
               aria-label="Menu"
             >
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}

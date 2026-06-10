@@ -1,17 +1,32 @@
-from .models import BuyerShipping
 from rest_framework import serializers
+from .models import BuyerShipping
 
 class BuyerShippingSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = BuyerShipping
-        fields = '__all__'
-        read_only_fields = ('user',)
+        fields = [
+            'id',
+            'full_name',
+            'mobile_number',
+            'address_line',
+            'landmark',
+            'opposite_of',
+            'city',
+            'state',
+            'zip_code',
+            'address_type',
+            'is_default',
+            'created_at'
+        ]
 
-    def create(self,validated_data):
-        user=self.context['request'].user
+        read_only_fields = [
+            'id',
+            'created_at'
+        ]
 
-        buyer=BuyerShipping.objects.create(user=user,**validated_data)
-
-        return buyer
-
-        
+    def create(self, validated_data):
+        return BuyerShipping.objects.create(
+            user=self.context['request'].user,
+            **validated_data
+        )
