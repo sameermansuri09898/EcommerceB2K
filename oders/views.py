@@ -19,6 +19,10 @@ from rest_framework.views import APIView
 from django.db.models import Prefetch
 from decimal import Decimal
 
+def clear_product_cache(user_id):
+    cache.delete(
+        f"cache_page:/api/user/productlist/:{user_id}"
+    )
 
 class productViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
@@ -100,64 +104,51 @@ class ProductVraientViewSet(viewsets.ModelViewSet):
     serializer_class = VarientProductSerializer
     permission_classes = [IsAuthenticated,SellerPermission]
     authentication_classes = [JWTAuthentication]
-
     def create(self, request):
+     product_id = request.data.get('product_id')
 
-        product_id = request.data.get('product_id')
+    # ✅ FIX: FormData sends everything as strings — parse JSON manually
+     import json
+     raw = request.data.get('variants', '[]')
+     variants_data = json.loads(raw) if isinstance(raw, str) else raw
 
-        variants_data = request.data.get('variants', [])
+     print(request.data)
+     print(variants_data)   # will now show: [{'colors': 83, 'sizes': 61, ...}]
 
-        print(request.data)
-        print(variants_data)
+     if not product_id:
+        return Response({"message": "Product ID is required"}, status=400)
 
-        if not product_id:
+     try:
+        seller_product = Product.objects.get(id=product_id)
+     except Product.DoesNotExist:
+        return Response({"message": "Product not found"}, status=404)
 
-            return Response(
-                {"message": "Product ID is required"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+     data_obj = []
+     with transaction.atomic():
+         for v in variants_data:
+             data_obj.append(
+                 variant(
+                    seller=request.user,
+                    product=seller_product,
+                    colors_id=v.get('colors'),
+                    sizes_id=v.get('sizes'),
+                    images=v.get('images'),
+                    price=v.get('price'),
+                    offer=v.get('offer'),
+                    stock=v.get('stock'),
+                )
+             )
+         variant.objects.bulk_create(data_obj)
 
-        try:
-
-            seller_product = Product.objects.get(id=product_id)
-
-        except Product.DoesNotExist:
-
-            return Response(
-                {"message": "Product not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        data_obj = []
-
-        with transaction.atomic():
-
-            for v in variants_data:
-
-                data_obj.append(
-                    variant(
-                        seller=request.user,
-                        product=seller_product,
-                colors_id=v.get('colors'),
-                sizes_id=v.get('sizes'),
-                images=v.get('images'),
-                price=v.get('price'),
-                offer=v.get('offer'),
-                stock=v.get('stock')
-            )
-        )
-
-        variant.objects.bulk_create(data_obj)
-    
-
-        return Response(
-            {
-                  "message": "Variants created successfully"
-            },
-            status=status.HTTP_201_CREATED
-        )
-
+    # ✅ Also return variant_id so frontend can PATCH the image
+     created_ids = [obj.id for obj in data_obj]
+     return Response({
+        "message": "Variants created successfully",
+        "variant_id": created_ids[0] if created_ids else None,
+        "variant_ids": created_ids,
+    }, status=201)
     def partial_update(self,request,pk):
+
       try:
         instance = variant.objects.get(id=pk)
       except variant.DoesNotExist:
@@ -177,7 +168,9 @@ class ProductVraientViewSet(viewsets.ModelViewSet):
         )
       serializer = VarientProductSerializer(instance,data=request.data,partial=True)
       serializer.is_valid(raise_exception=True)
+      
       serializer.save()
+      clear_product_cache(request.user.id)
       return Response(
           {
               "message": "Variant updated successfully",
@@ -186,7 +179,7 @@ class ProductVraientViewSet(viewsets.ModelViewSet):
           status=status.HTTP_200_OK
       )
     def destroy(self,request,pk):
-
+      
       try:
         instance = variant.objects.get(id=pk)
       except variant.DoesNotExist:
@@ -205,6 +198,7 @@ class ProductVraientViewSet(viewsets.ModelViewSet):
             status=status.HTTP_403_FORBIDDEN
         )
       instance.delete()
+      clear_product_cache(request.user.id)
       return Response(
           {
               "message": "Variant deleted successfully",
@@ -232,7 +226,7 @@ class Userproductlistview(generics.ListAPIView):
     authentication_classes = [JWTAuthentication] 
 
     def get(self,request):
-      timeout=60*15
+      timeout=60*1
       cache_key=f"cache_page:{request.get_full_path()}:{request.user.id}"
       cached_response=cache.get(cache_key)
       
@@ -240,7 +234,7 @@ class Userproductlistview(generics.ListAPIView):
         return Response(cached_response,status=status.HTTP_200_OK)  
       
       data=Product.objects.filter(user=request.user)
-      serializer=self.get_serializer(data,many=True)
+      serializer=ProductSerializer(data,many=True)
       cache.set(cache_key,serializer.data,timeout)
       return Response(serializer.data,status=status.HTTP_200_OK)
 

@@ -13,6 +13,7 @@ router.register('variant',views.ProductVraientViewSet, basename='variant')
 
 urlpatterns=[
   path('productlist/',views.ProductAndVariantListView.as_view(),name='product_and_variant_list'),
+  path('user/productlist/',views.Userproductlistview.as_view(),name='product_and_variant_list'),
   path('addcart/',views.AddToCartView.as_view(),name='addcart'),
   path('viewcart/',views.ViewCart.as_view(),name='viewcart'),
   path('deletecart/', views.DeleteCartItemView.as_view(), name='deletecart'),

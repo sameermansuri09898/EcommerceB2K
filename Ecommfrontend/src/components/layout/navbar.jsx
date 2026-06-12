@@ -383,7 +383,9 @@ const Nav = () => {
                 <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-base">S</div>
                 <div>
                   <p className="font-semibold text-gray-800 text-sm">Sameer</p>
-                  <p className="text-xs text-gray-500">View account</p>
+                  <p className="text-xs text-gray-500" onClick={() => { navigate("/seller/dashboard"); setMobileOpen(false); }}>
+                    View account
+                  </p>
                 </div>
               </div>
             ) : (

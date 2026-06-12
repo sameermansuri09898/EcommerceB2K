@@ -17,7 +17,7 @@ import Categories from './components/categories/swipercat'
 import AddProduct from './components/sellercredentials/addproduct'
 import ProductPage from  './components/product/itemView'
 import Wishlist from './components/product/whislist.jsx'
-
+import SellerDashboard from "./components/sellerDashboard/Sellerdash";
 import Address from "./components/pages/Address";
 
 
@@ -50,6 +50,7 @@ export default function App() {
         <Route path="/Cart" element={<Cart />} />
         <Route path="/seller/add-product" element={<AddProduct />} />
         <Route path="/Wishlist" element={<Wishlist />} />
+        <Route path="/seller/dashboard" element={<SellerDashboard />} />
       </Routes>
 <Footer/>
     </BrowserRouter>
