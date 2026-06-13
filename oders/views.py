@@ -104,49 +104,75 @@ class ProductVraientViewSet(viewsets.ModelViewSet):
     serializer_class = VarientProductSerializer
     permission_classes = [IsAuthenticated,SellerPermission]
     authentication_classes = [JWTAuthentication]
+   
+
+class ProductVraientViewSet(viewsets.ModelViewSet):
+    queryset = variant.objects.all()
+    serializer_class = VarientProductSerializer
+    permission_classes = [IsAuthenticated, SellerPermission]
+    authentication_classes = [JWTAuthentication]
+
     def create(self, request):
-     product_id = request.data.get('product_id')
+        import json
 
-    # ✅ FIX: FormData sends everything as strings — parse JSON manually
-     import json
-     raw = request.data.get('variants', '[]')
-     variants_data = json.loads(raw) if isinstance(raw, str) else raw
+        # ── Figure out product ──────────────────────────────
+        # Frontend "product" bhejta hai (FormData field name)
+        product_id = request.data.get('product') or request.data.get('product_id')
 
-     print(request.data)
-     print(variants_data)   # will now show: [{'colors': 83, 'sizes': 61, ...}]
+        if not product_id:
+            return Response({"message": "Product ID is required"}, status=400)
 
-     if not product_id:
-        return Response({"message": "Product ID is required"}, status=400)
+        try:
+            seller_product = Product.objects.get(id=product_id, user=request.user)
+        except Product.DoesNotExist:
+            return Response({"message": "Product not found"}, status=404)
 
-     try:
-        seller_product = Product.objects.get(id=product_id)
-     except Product.DoesNotExist:
-        return Response({"message": "Product not found"}, status=404)
+        # ── Check: bulk (JSON variants array) OR single (FormData) ──
+        raw = request.data.get('variants')
 
-     data_obj = []
-     with transaction.atomic():
-         for v in variants_data:
-             data_obj.append(
-                 variant(
+        if raw:
+            # ── OLD FLOW: JSON bulk variants (no image files) ──────
+            variants_data = json.loads(raw) if isinstance(raw, str) else raw
+
+            data_obj = []
+            with transaction.atomic():
+                for v in variants_data:
+                    data_obj.append(
+                        variant(
+                            seller=request.user,
+                            product=seller_product,
+                            colors_id=v.get('colors'),
+                            sizes_id=v.get('sizes'),
+                            images=v.get('images', ''),
+                            price=v.get('price'),
+                            offer=v.get('offer', 0),
+                            stock=v.get('stock', 0),
+                        )
+                    )
+                variant.objects.bulk_create(data_obj)
+
+            created_ids = [obj.id for obj in data_obj]
+            return Response({
+                "message": "Variants created successfully",
+                "variant_ids": created_ids,
+            }, status=201)
+
+        else:
+            # ── NEW FLOW: single variant with image file (multipart) ─
+            # request.data mein colors, sizes, price, offer, stock, images sab hai
+            serializer = VarientProductSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(
                     seller=request.user,
                     product=seller_product,
-                    colors_id=v.get('colors'),
-                    sizes_id=v.get('sizes'),
-                    images=v.get('images'),
-                    price=v.get('price'),
-                    offer=v.get('offer'),
-                    stock=v.get('stock'),
                 )
-             )
-         variant.objects.bulk_create(data_obj)
+                return Response({
+                    "message": "Variant created successfully",
+                    "variant_id": serializer.data['id'],
+                }, status=201)
 
-    # ✅ Also return variant_id so frontend can PATCH the image
-     created_ids = [obj.id for obj in data_obj]
-     return Response({
-        "message": "Variants created successfully",
-        "variant_id": created_ids[0] if created_ids else None,
-        "variant_ids": created_ids,
-    }, status=201)
+            print("Serializer errors:", serializer.errors)
+            return Response(serializer.errors, status=400)
     def partial_update(self,request,pk):
 
       try:

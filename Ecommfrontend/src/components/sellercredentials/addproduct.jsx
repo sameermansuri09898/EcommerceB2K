@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import {
   Package, Palette, CheckCircle, AlertCircle,
   Plus, Trash2, ChevronRight, ChevronLeft,
   Tag, Layers, ShieldX, Loader2, X,
-  Sparkles, Image as ImageIcon, LayoutGrid,
+  Sparkles, LayoutGrid, Store,
+  ArrowRight, BadgeCheck, Upload, ImagePlus, Trash,
 } from "lucide-react";
 
 const API = "http://127.0.0.1:8000/api";
 
-/* ─────────────────── TOKEN UTILS ─────────────────── */
+/* ═══════════════════════════════════════════
+   TOKEN UTILITIES
+═══════════════════════════════════════════ */
 function getToken() {
   const token = localStorage.getItem("access");
   if (!token) return null;
@@ -23,12 +26,10 @@ function getToken() {
     return token;
   } catch { return null; }
 }
-
-function authHeaders() {
+function authToken() {
   const t = getToken();
-  return { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) };
+  return t ? { Authorization: `Bearer ${t}` } : {};
 }
-
 function getUserRole() {
   const token = getToken();
   if (!token) return null;
@@ -38,72 +39,149 @@ function getUserRole() {
   } catch { return null; }
 }
 
-/* ─────────────────── SUCCESS POPUP ─────────────────── */
-function SuccessPopup({ message, subtitle, onClose }) {
-  useEffect(() => {
-    const t = setTimeout(onClose, 3500);
-    return () => clearTimeout(t);
-  }, [onClose]);
+/* ═══════════════════════════════════════════
+   GLOBAL STYLES
+═══════════════════════════════════════════ */
+const STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+  * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
 
+  @keyframes slideUp {
+    from { opacity:0; transform:translateY(20px) scale(0.98); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+  }
+  @keyframes popIn {
+    0%  { opacity:0; transform:scale(0.82) translateY(14px); }
+    65% { transform:scale(1.04) translateY(-2px); }
+    100%{ opacity:1; transform:scale(1) translateY(0); }
+  }
+  @keyframes shrinkBar { from{width:100%} to{width:0%} }
+  @keyframes fadeDown  {
+    from { opacity:0; transform:translateY(-6px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @keyframes shimmer {
+    0%   { background-position:-200% 0; }
+    100% { background-position:200% 0; }
+  }
+  @keyframes pulseSoft { 0%,100%{opacity:1} 50%{opacity:.55} }
+
+  .anim-slide-up  { animation: slideUp  0.4s cubic-bezier(0.22,1,0.36,1) both; }
+  .anim-pop-in    { animation: popIn    0.38s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .anim-shrink    { animation: shrinkBar 3.5s linear both; }
+  .anim-fade-down { animation: fadeDown 0.22s ease-out both; }
+  .anim-spin      { animation: spin 0.85s linear infinite; }
+  .anim-pulse     { animation: pulseSoft 1.8s ease-in-out infinite; }
+
+  .shimmer-bg {
+    background: linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%);
+    background-size:200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+  .scroll-thin::-webkit-scrollbar       { width:5px; }
+  .scroll-thin::-webkit-scrollbar-track { background:transparent; }
+  .scroll-thin::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:99px; }
+  select { background-image:none !important; }
+
+  .drop-zone-active {
+    border-color: #6366f1 !important;
+    background-color: #eef2ff !important;
+  }
+`;
+
+/* ═══════════════════════════════════════════
+   SHARED INPUT CLASSES
+═══════════════════════════════════════════ */
+const ib  = "w-full border rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 bg-slate-50 focus:bg-white";
+const iN  = ib + " border-slate-200 focus:ring-indigo-400/30 focus:border-indigo-400";
+const iE  = ib + " border-red-300 ring-2 ring-red-100 bg-red-50/30 focus:ring-red-300";
+const sN  = iN + " cursor-pointer pr-10 appearance-none";
+const sE  = iE + " cursor-pointer pr-10 appearance-none";
+
+/* ═══════════════════════════════════════════
+   FIELD WRAPPER
+═══════════════════════════════════════════ */
+function Field({ label, required, hint, error, children }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-[11px] font-semibold tracking-widest text-slate-500 uppercase flex items-center gap-1">
+        {label}{required && <span className="text-rose-400 text-sm leading-none">*</span>}
+      </label>
+      {children}
+      {hint && !error && <p className="text-xs text-slate-400">{hint}</p>}
+      {error && (
+        <p className="text-xs text-rose-500 flex items-center gap-1 anim-fade-down">
+          <AlertCircle size={11} className="flex-shrink-0" /> {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   ERROR BANNER
+═══════════════════════════════════════════ */
+function ErrorBanner({ message, onClose }) {
+  return (
+    <div className="flex items-start gap-3 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3.5 mb-5 anim-fade-down">
+      <AlertCircle size={16} className="text-rose-500 flex-shrink-0 mt-0.5" />
+      <p className="text-sm text-rose-700 flex-1 leading-relaxed">{message}</p>
+      <button onClick={onClose} className="text-rose-300 hover:text-rose-500 transition flex-shrink-0"><X size={14} /></button>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   SUCCESS POPUP
+═══════════════════════════════════════════ */
+function SuccessPopup({ message, subtitle, onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 3500); return () => clearTimeout(t); }, [onClose]);
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center animate-popIn">
-        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-emerald-200">
-          <CheckCircle size={40} className="text-white" strokeWidth={2.5} />
+      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-3xl shadow-2xl p-8 max-w-xs w-full text-center anim-pop-in">
+        <button onClick={onClose} className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-slate-100 transition text-slate-400"><X size={14} /></button>
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-emerald-200">
+          <BadgeCheck size={38} className="text-white" strokeWidth={2} />
         </div>
-        <button onClick={onClose} className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-gray-100 transition text-gray-400">
-          <X size={16} />
-        </button>
-        <h3 className="text-2xl font-black text-gray-900 mb-1">{message}</h3>
-        {subtitle && <p className="text-gray-500 text-sm mt-1">{subtitle}</p>}
-        <div className="mt-5 h-1 bg-gray-100 rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full animate-shrinkBar" />
+        <h3 className="text-xl font-black text-slate-900 mb-1">{message}</h3>
+        {subtitle && <p className="text-slate-400 text-sm mt-1">{subtitle}</p>}
+        <div className="mt-5 h-1 bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full anim-shrink" />
         </div>
       </div>
     </div>
   );
 }
 
-/* ─────────────────── ERROR BANNER ─────────────────── */
-function ErrorBanner({ message, onClose }) {
-  return (
-    <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-5 animate-fadeIn">
-      <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
-      <p className="text-sm text-red-700 flex-1">{message}</p>
-      <button onClick={onClose} className="text-red-300 hover:text-red-500 transition flex-shrink-0"><X size={15} /></button>
-    </div>
-  );
-}
-
-/* ─────────────────── STEP INDICATOR ─────────────────── */
-function StepIndicator({ currentStep }) {
+/* ═══════════════════════════════════════════
+   STEP INDICATOR
+═══════════════════════════════════════════ */
+function StepIndicator({ current }) {
   const steps = [
-    { num: 1, label: "Product Info", icon: Package },
-    { num: 2, label: "Add Variants", icon: Layers },
-    { num: 3, label: "Done", icon: Sparkles },
+    { n: 1, label: "Details",  Icon: Package  },
+    { n: 2, label: "Variants", Icon: Layers   },
+    { n: 3, label: "Done",     Icon: Sparkles },
   ];
   return (
     <div className="flex items-center justify-center mb-10">
-      {steps.map((step, i) => {
-        const Icon = step.icon;
-        const done = currentStep > step.num;
-        const active = currentStep === step.num;
+      {steps.map((s, i) => {
+        const done = current > s.n, active = current === s.n;
         return (
-          <React.Fragment key={step.num}>
-            <div className="flex flex-col items-center gap-1.5">
-              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-sm transition-all duration-300 shadow-sm
-                ${done ? "bg-emerald-500 text-white shadow-emerald-200"
-                  : active ? "bg-slate-900 text-white shadow-slate-200"
-                  : "bg-gray-100 text-gray-400"}`}>
-                {done ? <CheckCircle size={20} strokeWidth={2.5} /> : <Icon size={18} />}
+          <React.Fragment key={s.n}>
+            <div className="flex flex-col items-center gap-2 min-w-[68px]">
+              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold transition-all duration-300 shadow-sm
+                ${done?"bg-emerald-500 text-white shadow-emerald-200":active?"bg-indigo-600 text-white shadow-indigo-200":"bg-slate-100 text-slate-400"}`}>
+                {done ? <CheckCircle size={18} strokeWidth={2.5}/> : <s.Icon size={16}/>}
               </div>
-              <span className={`text-xs font-semibold transition-colors ${active ? "text-slate-900" : done ? "text-emerald-600" : "text-gray-400"}`}>
-                {step.label}
-              </span>
+              <span className={`text-[11px] font-semibold tracking-wide transition-colors
+                ${active?"text-indigo-600":done?"text-emerald-600":"text-slate-400"}`}>{s.label}</span>
             </div>
-            {i < steps.length - 1 && (
-              <div className={`h-0.5 w-16 sm:w-24 mx-2 mb-5 rounded-full transition-all duration-500 ${currentStep > step.num ? "bg-emerald-400" : "bg-gray-200"}`} />
+            {i < steps.length-1 && (
+              <div className="flex-1 mx-1 mb-5">
+                <div className={`h-[2px] rounded-full transition-all duration-500 ${current>s.n?"bg-emerald-400":"bg-slate-100"}`}/>
+              </div>
             )}
           </React.Fragment>
         );
@@ -112,643 +190,642 @@ function StepIndicator({ currentStep }) {
   );
 }
 
-/* ─────────────────── FIELD COMPONENT ─────────────────── */
-function Field({ label, required, children, hint }) {
+/* ═══════════════════════════════════════════
+   IMAGE PICKER (drag-drop + click)
+═══════════════════════════════════════════ */
+function ImagePicker({ file, preview, onChange, error }) {
+  const inputRef  = useRef();
+  const [drag, setDrag] = useState(false);
+
+  const handleFile = (f) => {
+    if (!f || !f.type.startsWith("image/")) return;
+    const url = URL.createObjectURL(f);
+    onChange(f, url);
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault(); setDrag(false);
+    handleFile(e.dataTransfer.files[0]);
+  };
+
+  const removeImage = (e) => {
+    e.stopPropagation();
+    onChange(null, null);
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-semibold text-gray-700 flex items-center gap-1">
-        {label}
-        {required && <span className="text-red-400">*</span>}
+    <div className="sm:col-span-2">
+      <label className="text-[11px] font-semibold tracking-widest text-slate-500 uppercase flex items-center gap-1 mb-1.5">
+        Variant Image <span className="text-rose-400 text-sm leading-none">*</span>
       </label>
-      {children}
-      {hint && <p className="text-xs text-gray-400">{hint}</p>}
+
+      {preview ? (
+        /* ── Preview card ── */
+        <div className="relative w-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm group">
+          <img src={preview} alt="variant" className="w-full h-48 object-cover" />
+          {/* overlay */}
+          <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/30 transition-all duration-200 flex items-center justify-center">
+            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
+              <button
+                onClick={() => inputRef.current?.click()}
+                className="bg-white text-slate-700 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-md hover:bg-indigo-50 hover:text-indigo-600 transition"
+              >
+                <Upload size={12}/> Change
+              </button>
+              <button
+                onClick={removeImage}
+                className="bg-white text-rose-500 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-md hover:bg-rose-50 transition"
+              >
+                <Trash size={12}/> Remove
+              </button>
+            </div>
+          </div>
+          {/* file name tag */}
+          <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-2.5 py-1 text-xs text-slate-600 font-medium flex items-center gap-1.5 max-w-[80%] truncate shadow-sm">
+            <CheckCircle size={11} className="text-emerald-500 flex-shrink-0"/>
+            {file?.name}
+          </div>
+        </div>
+      ) : (
+        /* ── Drop zone ── */
+        <div
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+          onDragLeave={() => setDrag(false)}
+          onDrop={onDrop}
+          className={`
+            w-full h-36 rounded-2xl border-2 border-dashed cursor-pointer
+            flex flex-col items-center justify-center gap-2 transition-all duration-200
+            ${drag ? "drop-zone-active" : error ? "border-red-300 bg-red-50/30" : "border-slate-200 bg-slate-50 hover:border-indigo-400 hover:bg-indigo-50/40"}
+          `}
+        >
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors
+            ${drag ? "bg-indigo-100 text-indigo-500" : error ? "bg-red-100 text-red-400" : "bg-slate-100 text-slate-400"}`}>
+            <ImagePlus size={20}/>
+          </div>
+          <div className="text-center">
+            <p className={`text-sm font-semibold ${drag?"text-indigo-600":error?"text-red-500":"text-slate-600"}`}>
+              {drag ? "Drop to upload" : "Click or drag image here"}
+            </p>
+            <p className="text-xs text-slate-400 mt-0.5">PNG, JPG, WEBP · max 5 MB</p>
+          </div>
+        </div>
+      )}
+
+      {/* hidden input */}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => handleFile(e.target.files[0])}
+      />
+      {error && (
+        <p className="text-xs text-rose-500 flex items-center gap-1 mt-1.5 anim-fade-down">
+          <AlertCircle size={11}/> {error}
+        </p>
+      )}
     </div>
   );
 }
 
-const inputCls = "w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition bg-gray-50 focus:bg-white";
-const selectCls = inputCls + " cursor-pointer appearance-none";
+/* ═══════════════════════════════════════════
+   VARIANT CARD
+═══════════════════════════════════════════ */
+function VariantCard({ variant, index, colors, sizes, onChange, onRemove, errors = {} }) {
+  const upd = (k, v) => onChange(index, k, v);
 
-/* ─────────────────── VARIANT CARD ─────────────────── */
-function VariantCard({ variant, index, colors, sizes, onChange, onRemove, errors }) {
-  const update = (key, val) => onChange(index, key, val);
+  const priceWarn =
+    variant.offer_price && variant.final_price &&
+    parseFloat(variant.offer_price) >= parseFloat(variant.final_price);
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center">
-            <span className="text-xs font-black text-slate-600">{index + 1}</span>
+    <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 anim-slide-up">
+      {/* header */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center">
+            <span className="text-xs font-black text-indigo-500">{index+1}</span>
           </div>
-          <span className="font-semibold text-sm text-gray-800">Variant #{index + 1}</span>
+          <span className="text-sm font-bold text-slate-700">Variant #{index+1}</span>
         </div>
-        <button
-          onClick={() => onRemove(index)}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
-          title="Remove variant"
-        >
-          <Trash2 size={15} />
+        <button onClick={() => onRemove(index)}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all" title="Remove">
+          <Trash2 size={14}/>
         </button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
         {/* Color */}
-        <Field label="Color" required>
+        <Field label="Colour" required error={errors.color_name}>
           <div className="relative">
-            <select
-              value={variant.color_name}
-              onChange={(e) => update("color_name", e.target.value)}
-              className={selectCls + (errors?.color_name ? " !border-red-400 ring-2 ring-red-100" : "")}
-            >
-              <option value="">Select color</option>
-              {colors.map((c) => (
-                <option key={c.id} value={c.id}>{c.color_name || c.name}</option>
-              ))}
+            <select value={variant.color_name} onChange={(e) => upd("color_name", e.target.value)}
+              className={errors.color_name ? sE : sN}>
+              <option value="">Select colour</option>
+              {colors.map((c) => <option key={c.id} value={c.id}>{c.color}</option>)}
             </select>
-            <Palette size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <Palette size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
           </div>
-          {errors?.color_name && <p className="text-xs text-red-500">{errors.color_name}</p>}
         </Field>
 
         {/* Size */}
-        <Field label="Size" required>
+        <Field label="Size" required error={errors.size_name}>
           <div className="relative">
-            <select
-              value={variant.size_name}
-              onChange={(e) => update("size_name", e.target.value)}
-              className={selectCls + (errors?.size_name ? " !border-red-400 ring-2 ring-red-100" : "")}
-            >
+            <select value={variant.size_name} onChange={(e) => upd("size_name", e.target.value)}
+              className={errors.size_name ? sE : sN}>
               <option value="">Select size</option>
-              {sizes.map((s) => (
-                <option key={s.id} value={s.id}>{s.size_name || s.name}</option>
-              ))}
+              {sizes.map((s) => <option key={s.id} value={s.id}>{s.size}</option>)}
             </select>
-            <Tag size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <Tag size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
           </div>
-          {errors?.size_name && <p className="text-xs text-red-500">{errors.size_name}</p>}
         </Field>
 
-        {/* Final Price */}
-        <Field label="Original Price (₹)" required>
+        {/* Original price */}
+        <Field label="Original Price (₹)" required error={errors.final_price}>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm">₹</span>
-            <input
-              type="number"
-              min="0"
-              placeholder="999"
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-sm select-none">₹</span>
+            <input type="number" min="0" placeholder="1 299"
               value={variant.final_price}
-              onChange={(e) => update("final_price", e.target.value)}
-              className={"pl-7 " + inputCls + (errors?.final_price ? " !border-red-400 ring-2 ring-red-100" : "")}
-            />
+              onChange={(e) => upd("final_price", e.target.value)}
+              className={`pl-8 ${errors.final_price ? iE : iN}`}/>
           </div>
-          {errors?.final_price && <p className="text-xs text-red-500">{errors.final_price}</p>}
         </Field>
 
-        {/* Offer Price */}
-        <Field label="Offer Price (₹)" hint="Leave empty if no discount">
+        {/* Offer price */}
+        <Field label="Offer Price (₹)" hint="Leave blank if no discount"
+          error={priceWarn ? "Must be less than original" : ""}>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm">₹</span>
-            <input
-              type="number"
-              min="0"
-              placeholder="799"
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-sm select-none">₹</span>
+            <input type="number" min="0" placeholder="999"
               value={variant.offer_price}
-              onChange={(e) => update("offer_price", e.target.value)}
-              className={"pl-7 " + inputCls}
-            />
+              onChange={(e) => upd("offer_price", e.target.value)}
+              className={`pl-8 ${priceWarn ? iE : iN}`}/>
           </div>
-          {variant.offer_price && variant.final_price &&
-            parseFloat(variant.offer_price) >= parseFloat(variant.final_price) && (
-            <p className="text-xs text-amber-500">⚠ Offer price should be less than original</p>
-          )}
         </Field>
 
-        {/* Image URL — full width */}
-        <div className="sm:col-span-2">
-          <Field label="Image URL" required hint="Direct public link to product image (https://...)">
-            <div className="relative">
-              <ImageIcon size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="url"
-                placeholder="https://example.com/image.jpg"
-                value={variant.image_url}
-                onChange={(e) => update("image_url", e.target.value)}
-                className={"pl-9 " + inputCls + (errors?.image_url ? " !border-red-400 ring-2 ring-red-100" : "")}
-              />
-            </div>
-            {errors?.image_url && <p className="text-xs text-red-500">{errors.image_url}</p>}
-          </Field>
-        </div>
+        {/* Stock */}
+        <Field label="Stock" required error={errors.stock}>
+          <input type="number" min="0" max="100" placeholder="50"
+            value={variant.stock}
+            onChange={(e) => upd("stock", e.target.value)}
+            className={errors.stock ? iE : iN}/>
+        </Field>
 
-        {/* Image Preview */}
-        {variant.image_url && (
-          <div className="sm:col-span-2">
-            <p className="text-xs text-gray-400 mb-1.5">Preview</p>
-            <img
-              src={variant.image_url}
-              alt="Preview"
-              className="h-24 w-24 object-cover rounded-xl border border-gray-200 shadow-sm"
-              onError={(e) => { e.target.style.display = "none"; }}
-            />
-          </div>
-        )}
+        {/* Spacer for grid alignment */}
+        <div className="hidden sm:block"/>
+
+        {/* Image Picker — full width */}
+        <ImagePicker
+          file={variant.imageFile}
+          preview={variant.imagePreview}
+          onChange={(file, preview) => {
+            upd("imageFile", file);
+            upd("imagePreview", preview);
+          }}
+          error={errors.imageFile}
+        />
       </div>
     </div>
   );
 }
 
-/* ─────────────────── STEP 1: PRODUCT INFO ─────────────────── */
+/* ═══════════════════════════════════════════
+   PROGRESS BAR (multi-variant upload)
+═══════════════════════════════════════════ */
+function UploadProgress({ done, total }) {
+  const pct = Math.round((done / total) * 100);
+  return (
+    <div className="mt-4 bg-indigo-50 border border-indigo-100 rounded-2xl px-5 py-4">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-semibold text-indigo-700">Uploading variants…</span>
+        <span className="text-sm font-bold text-indigo-600">{done}/{total}</span>
+      </div>
+      <div className="h-2 bg-indigo-100 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-500"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <p className="text-xs text-indigo-400 mt-1.5">{pct}% complete</p>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   STEP 1 — PRODUCT INFO
+═══════════════════════════════════════════ */
 function Step1({ data, onChange, onNext, loading, error, onErrorClose, categories }) {
-  const [errors, setErrors] = useState({});
+  const [errs, setErrs] = useState({});
 
   const validate = () => {
     const e = {};
-    if (!data.name.trim())        e.name        = "Product name is required";
-    if (!data.brand.trim())       e.brand       = "Brand is required";
-    if (!data.category)           e.category    = "Category is required";
-    if (!data.description.trim()) e.description = "Description is required";
-    setErrors(e);
-    return Object.keys(e).length === 0;
+    if (!data.name.trim() || data.name.trim().length < 5)
+      e.name = "At least 5 characters required";
+    if (!data.brand.trim() || data.brand.trim().length < 3)
+      e.brand = "At least 3 characters required";
+    if (!data.category) e.category = "Please select a category";
+    if (!data.description.trim() || data.description.trim().length < 10)
+      e.description = "At least 10 characters required";
+    setErrs(e);
+    return !Object.keys(e).length;
   };
-
-  const handleNext = () => { if (validate()) onNext(); };
 
   return (
     <div>
-      <div className="mb-8">
-        <h2 className="text-2xl font-black text-gray-900 mb-1">Product Details</h2>
-        <p className="text-gray-500 text-sm">Fill in the core information about your product</p>
+      <div className="mb-7">
+        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Product Details</h2>
+        <p className="text-slate-400 text-sm mt-1">Core information about your listing</p>
       </div>
 
-      {error && <ErrorBanner message={error} onClose={onErrorClose} />}
+      {error && <ErrorBanner message={error} onClose={onErrorClose}/>}
 
       <div className="space-y-5">
-        {/* Product Name */}
-        <Field label="Product Name" required>
-          <input
-            type="text"
-            placeholder="e.g. Premium Cotton Shirt"
-            value={data.name}
-            onChange={(e) => onChange("name", e.target.value)}
-            className={inputCls + (errors.name ? " !border-red-400 ring-2 ring-red-100" : "")}
-          />
-          {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
+        <Field label="Product Name" required error={errs.name} hint="Min. 5 characters">
+          <input type="text" placeholder="e.g. Premium Cotton Oversized T-Shirt"
+            value={data.name} onChange={(e) => onChange("name", e.target.value)}
+            className={errs.name ? iE : iN}/>
         </Field>
 
-        {/* Brand */}
-        <Field label="Brand" required>
-          <input
-            type="text"
-            placeholder="e.g. Puma, Nike, H&M"
-            value={data.brand}
-            onChange={(e) => onChange("brand", e.target.value)}
-            className={inputCls + (errors.brand ? " !border-red-400 ring-2 ring-red-100" : "")}
-          />
-          {errors.brand && <p className="text-xs text-red-500">{errors.brand}</p>}
+        <Field label="Brand" required error={errs.brand} hint="Min. 3 characters">
+          <input type="text" placeholder="e.g. Nike, Puma, H&M"
+            value={data.brand} onChange={(e) => onChange("brand", e.target.value)}
+            className={errs.brand ? iE : iN}/>
         </Field>
 
-        {/* Category — fetched from API */}
-        <Field label="Category" required>
+        <Field label="Category" required error={errs.category}>
           <div className="relative">
-            <select
-              value={data.category}
-              onChange={(e) => onChange("category", e.target.value)}
-              className={selectCls + (errors.category ? " !border-red-400 ring-2 ring-red-100" : "")}
-            >
-              <option value="">Select a category</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.categorie || cat.categorie_name || cat.name}
-                </option>
+            <select value={data.category} onChange={(e) => onChange("category", e.target.value)}
+              className={errs.category ? sE : sN}>
+              <option value="">Choose a category</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.categorie}</option>
               ))}
             </select>
-            <LayoutGrid size={15} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <LayoutGrid size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
           </div>
-          {errors.category && <p className="text-xs text-red-500">{errors.category}</p>}
         </Field>
 
-        {/* Description */}
-        <Field label="Description" required>
-          <textarea
-            rows={4}
-            placeholder="Describe your product in detail — materials, features, benefits..."
+        <Field label="Description" required error={errs.description} hint="Min. 10 chars · max 500">
+          <textarea rows={4} placeholder="Describe your product — materials, features, fit…"
             value={data.description}
             onChange={(e) => onChange("description", e.target.value)}
-            className={inputCls + " resize-none" + (errors.description ? " !border-red-400 ring-2 ring-red-100" : "")}
-          />
-          <div className="flex items-center justify-between">
-            {errors.description
-              ? <p className="text-xs text-red-500">{errors.description}</p>
-              : <span />}
-            <span className={`text-xs ${data.description.length > 500 ? "text-red-400" : "text-gray-400"}`}>
-              {data.description.length}/500
+            className={`${errs.description ? iE : iN} resize-none leading-relaxed`}
+            maxLength={500}/>
+          <div className="flex justify-end">
+            <span className={`text-xs font-medium ${data.description.length > 470 ? "text-rose-400" : "text-slate-400"}`}>
+              {data.description.length} / 500
             </span>
           </div>
         </Field>
       </div>
 
-      <button
-        onClick={handleNext}
-        disabled={loading}
-        className="mt-8 w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 rounded-2xl transition-all duration-200 shadow-lg shadow-slate-200 disabled:opacity-60 disabled:cursor-not-allowed text-sm"
-      >
+      <button onClick={() => { if (validate()) onNext(); }} disabled={loading}
+        className="mt-8 w-full flex items-center justify-center gap-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-semibold py-3.5 rounded-2xl transition-all shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm">
         {loading
-          ? <><Loader2 size={18} className="animate-spin" /> Creating product...</>
-          : <>Continue to Variants <ChevronRight size={18} /></>}
+          ? <><Loader2 size={17} className="anim-spin"/> Creating product…</>
+          : <>Continue to Variants <ArrowRight size={16}/></>}
       </button>
     </div>
   );
 }
 
-/* ─────────────────── STEP 2: VARIANTS ─────────────────── */
+/* ═══════════════════════════════════════════
+   STEP 2 — VARIANTS (multipart per variant)
+═══════════════════════════════════════════ */
+const emptyVariant = () => ({
+  color_name: "", size_name: "",
+  final_price: "", offer_price: "", stock: "",
+  imageFile: null, imagePreview: null,
+});
+
 function Step2({ productId, colors, sizes, onDone, onBack }) {
-  const emptyVariant = { color_name: "", size_name: "", image_url: "", final_price: "", offer_price: "" };
+  const [variants,     setVariants]     = useState([emptyVariant()]);
+  const [vErrors,      setVErrors]      = useState([{}]);
+  const [submitting,   setSubmitting]   = useState(false);
+  const [uploadDone,   setUploadDone]   = useState(0);
+  const [error,        setError]        = useState("");
+  const [successPopup, setSuccessPopup] = useState(null);
 
-  const [variants, setVariants]           = useState([{ ...emptyVariant }]);
-  const [variantErrors, setVariantErrors] = useState([{}]);
-  const [submitting, setSubmitting]       = useState(false);
-  const [submitted, setSubmitted]         = useState([]);
-  const [error, setError]                 = useState("");
-  const [successPopup, setSuccessPopup]   = useState(null);
-
-  const updateVariant = (idx, key, val) => {
+  const updateVariant = useCallback((idx, key, val) => {
     setVariants((v) => v.map((vr, i) => i === idx ? { ...vr, [key]: val } : vr));
-    setVariantErrors((e) => e.map((er, i) => i === idx ? { ...er, [key]: "" } : er));
-  };
+    setVErrors((e) => e.map((er, i) => i === idx ? { ...er, [key]: "" } : er));
+  }, []);
 
   const addVariant = () => {
-    setVariants((v) => [...v, { ...emptyVariant }]);
-    setVariantErrors((e) => [...e, {}]);
+    setVariants((v) => [...v, emptyVariant()]);
+    setVErrors((e) => [...e, {}]);
   };
 
   const removeVariant = (idx) => {
     if (variants.length === 1) return;
     setVariants((v) => v.filter((_, i) => i !== idx));
-    setVariantErrors((e) => e.filter((_, i) => i !== idx));
+    setVErrors((e) => e.filter((_, i) => i !== idx));
   };
 
   const validateAll = () => {
-    const allErrors = variants.map((v) => {
+    const all = variants.map((v) => {
       const e = {};
-      if (!v.color_name)      e.color_name  = "Required";
-      if (!v.size_name)       e.size_name   = "Required";
-      if (!v.final_price)     e.final_price = "Required";
-      if (!v.image_url.trim()) e.image_url  = "Required";
+      if (!v.color_name)    e.color_name  = "Required";
+      if (!v.size_name)     e.size_name   = "Required";
+      if (!v.final_price)   e.final_price = "Required";
+      if (!v.stock)         e.stock       = "Required";
+      if (!v.imageFile)     e.imageFile   = "Please select an image";
       return e;
     });
-    setVariantErrors(allErrors);
-    return allErrors.every((e) => Object.keys(e).length === 0);
+    setVErrors(all);
+    return all.every((e) => !Object.keys(e).length);
   };
 
-const submitVariants = async () => {
-  if (!validateAll()) return;
+  /* Submit each variant one by one as multipart/form-data */
+  const submit = async () => {
+    if (!validateAll()) return;
+    setSubmitting(true);
+    setError("");
+    setUploadDone(0);
 
-  setSubmitting(true);
-  setError("");
+    try {
+      for (let i = 0; i < variants.length; i++) {
+        const v = variants[i];
+        const fd = new FormData();
+        fd.append("product",  productId);
+        fd.append("colors",   Number(v.color_name));
+        fd.append("sizes",    Number(v.size_name));
+        fd.append("price",    Number(v.final_price));
+        fd.append("offer",    v.offer_price ? Number(v.offer_price) : 0);
+        fd.append("stock",    Number(v.stock));
+        fd.append("images",   v.imageFile, v.imageFile.name); // actual file
 
-  try {
-    const payload = {
-      product_id: productId,
-      variants: variants.map((v) => ({
-        colors: Number(v.color_name),
-        sizes: Number(v.size_name),
-        price: Number(v.final_price),
-        offer: v.offer_price ? Number(v.offer_price) : 0,
-        stock: 5, // ya apna stock field use karo
-      })),
-    };
+        await axios.post(`${API}/variant/`, fd, {
+          headers: {
+            ...authToken(),
+            // DO NOT set Content-Type — axios sets multipart boundary automatically
+          },
+        });
 
-    console.log("Sending Payload:", payload);
-
-    await axios.post(
-      `${API}/variant/`,
-      payload,
-      {
-        headers: authHeaders(),
+        setUploadDone(i + 1);
       }
-    );
 
-    setSuccessPopup({
-      message: "All Variants Added!",
-      subtitle: `${variants.length} variant${
-        variants.length > 1 ? "s" : ""
-      } created successfully`,
-    });
-
-    setTimeout(() => onDone(), 3600);
-
-  } catch (err) {
-    console.error(err);
-
-    const msg =
-      err?.response?.data
-        ? JSON.stringify(err.response.data)
-        : "Failed to add variants";
-
-    setError(msg);
-  } finally {
-    setSubmitting(false);
-  }
-};
+      setSuccessPopup({
+        message:  "All Variants Live!",
+        subtitle: `${variants.length} variant${variants.length > 1 ? "s" : ""} published`,
+      });
+      setTimeout(onDone, 3600);
+    } catch (err) {
+      const d = err?.response?.data;
+      setError(d ? JSON.stringify(d) : "Upload failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div>
       {successPopup && (
-        <SuccessPopup
-          message={successPopup.message}
-          subtitle={successPopup.subtitle}
-          onClose={() => setSuccessPopup(null)}
-        />
+        <SuccessPopup message={successPopup.message} subtitle={successPopup.subtitle}
+          onClose={() => setSuccessPopup(null)}/>
       )}
 
       <div className="mb-6">
-        <h2 className="text-2xl font-black text-gray-900 mb-1">Product Variants</h2>
-        <p className="text-gray-500 text-sm">Add color, size and pricing options for your product</p>
+        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Product Variants</h2>
+        <p className="text-slate-400 text-sm mt-1">Add colour, size, price and an image for each option</p>
       </div>
 
-      {error && <ErrorBanner message={error} onClose={() => setError("")} />}
+      {error && <ErrorBanner message={error} onClose={() => setError("")}/>}
 
-      {submitted.length > 0 && (
-        <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 mb-4 text-sm text-emerald-700 font-medium">
-          <CheckCircle size={15} />
-          {submitted.length} variant{submitted.length > 1 ? "s" : ""} saved successfully
-        </div>
-      )}
-
-      <div className="space-y-4 max-h-[55vh] overflow-y-auto pr-1 custom-scroll">
-        {variants.map((variant, i) => (
-          <VariantCard
-            key={i}
-            index={i}
-            variant={variant}
-            colors={colors}
-            sizes={sizes}
-            onChange={updateVariant}
-            onRemove={removeVariant}
-            errors={variantErrors[i]}
-          />
+      {/* Variant list */}
+      <div className="space-y-4 max-h-[56vh] overflow-y-auto pr-1 scroll-thin">
+        {variants.map((v, i) => (
+          <VariantCard key={i} index={i} variant={v}
+            colors={colors} sizes={sizes}
+            onChange={updateVariant} onRemove={removeVariant}
+            errors={vErrors[i]}/>
         ))}
       </div>
 
-      <button
-        onClick={addVariant}
-        className="mt-4 w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 hover:border-slate-900 text-gray-500 hover:text-slate-900 py-3.5 rounded-2xl transition text-sm font-semibold group"
-      >
-        <Plus size={18} className="group-hover:scale-110 transition-transform" />
-        Add Another Variant
+      {/* Add variant */}
+      <button onClick={addVariant}
+        className="mt-4 w-full flex items-center justify-center gap-2 border-2 border-dashed border-slate-200 hover:border-indigo-400 text-slate-400 hover:text-indigo-600 py-3.5 rounded-2xl transition-all text-sm font-semibold group">
+        <Plus size={16} className="group-hover:scale-110 transition-transform"/> Add Another Variant
       </button>
 
-      <div className="flex gap-3 mt-6">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 px-5 py-3 rounded-2xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-semibold text-sm transition"
-        >
-          <ChevronLeft size={16} /> Back
+      {/* Upload progress */}
+      {submitting && <UploadProgress done={uploadDone} total={variants.length}/>}
+
+      {/* Actions */}
+      <div className="flex gap-3 mt-5">
+        <button onClick={onBack} disabled={submitting}
+          className="flex items-center gap-2 px-5 py-3 rounded-2xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold text-sm transition-all disabled:opacity-40">
+          <ChevronLeft size={15}/> Back
         </button>
-        <button
-          onClick={submitVariants}
-          disabled={submitting}
-          className="flex-1 flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-2xl transition shadow-lg shadow-slate-200 disabled:opacity-60 text-sm"
-        >
+        <button onClick={submit} disabled={submitting}
+          className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-semibold py-3 rounded-2xl transition-all shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm">
           {submitting
-            ? <><Loader2 size={18} className="animate-spin" /> Submitting...</>
-            : <><CheckCircle size={16} /> Submit All Variants</>}
+            ? <><Loader2 size={16} className="anim-spin"/> Uploading {uploadDone}/{variants.length}…</>
+            : <><CheckCircle size={15}/> Publish All Variants</>}
         </button>
       </div>
     </div>
   );
 }
 
-/* ─────────────────── STEP 3: DONE ─────────────────── */
+/* ═══════════════════════════════════════════
+   STEP 3 — DONE
+═══════════════════════════════════════════ */
 function Step3({ onAddAnother }) {
   return (
-    <div className="text-center py-8">
-      <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-emerald-200">
-        <Sparkles size={44} className="text-white" />
+    <div className="text-center py-8 anim-slide-up">
+      <div className="relative w-24 h-24 mx-auto mb-7">
+        <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-xl shadow-emerald-200">
+          <Sparkles size={44} className="text-white"/>
+        </div>
+        <div className="absolute -bottom-2 -right-2 w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow-md">
+          <CheckCircle size={20} className="text-emerald-500" strokeWidth={2.5}/>
+        </div>
       </div>
-      <h2 className="text-3xl font-black text-gray-900 mb-2">Product Live! 🎉</h2>
-      <p className="text-gray-500 text-sm mb-8 max-w-xs mx-auto">
-        Your product and all its variants have been successfully published to the store.
+      <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Live on Store! 🎉</h2>
+      <p className="text-slate-400 text-sm mb-8 max-w-[260px] mx-auto leading-relaxed">
+        Your product and all variants are now visible to shoppers.
       </p>
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
-        <button
-          onClick={onAddAnother}
-          className="flex items-center justify-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-slate-800 transition shadow-lg shadow-slate-200"
-        >
-          <Plus size={16} /> Add Another Product
+        <button onClick={onAddAnother}
+          className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-semibold text-sm transition-all shadow-lg shadow-indigo-200">
+          <Plus size={15}/> Add Another Product
         </button>
-        <a
-          href="/dashboard"
-          className="flex items-center justify-center gap-2 border border-gray-200 text-gray-700 px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-gray-50 transition"
-        >
-          Go to Dashboard
+        <a href="/dashboard"
+          className="flex items-center justify-center gap-2 border border-slate-200 text-slate-700 hover:bg-slate-50 px-6 py-3 rounded-2xl font-semibold text-sm transition-all">
+          Go to Dashboard <ArrowRight size={14}/>
         </a>
       </div>
     </div>
   );
 }
 
-/* ─────────────────── ACCESS DENIED ─────────────────── */
+/* ═══════════════════════════════════════════
+   SKELETON
+═══════════════════════════════════════════ */
+function MetaSkeleton() {
+  return (
+    <div className="space-y-5 anim-pulse">
+      {[1,2,3,4].map((i) => (
+        <div key={i}>
+          <div className="shimmer-bg h-3 w-24 rounded-full mb-2"/>
+          <div className="shimmer-bg h-11 w-full rounded-xl"/>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   ACCESS DENIED
+═══════════════════════════════════════════ */
 function AccessDenied() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <div className="bg-white rounded-3xl shadow-xl p-10 max-w-sm w-full text-center border border-gray-100">
-        <div className="w-20 h-20 rounded-3xl bg-red-100 flex items-center justify-center mx-auto mb-5">
-          <ShieldX size={40} className="text-red-500" />
+      <div className="bg-white rounded-3xl shadow-xl p-10 max-w-sm w-full text-center border border-slate-100 anim-slide-up">
+        <div className="w-20 h-20 rounded-3xl bg-rose-50 border border-rose-100 flex items-center justify-center mx-auto mb-5">
+          <ShieldX size={38} className="text-rose-400"/>
         </div>
-        <h2 className="text-2xl font-black text-gray-900 mb-2">Access Restricted</h2>
-        <p className="text-gray-500 text-sm mb-6">
-          Only <span className="font-semibold text-slate-900">Seller</span> accounts can add products.
-          Please login with a seller account.
+        <h2 className="text-2xl font-black text-slate-900 mb-2">Access Restricted</h2>
+        <p className="text-slate-400 text-sm mb-7 leading-relaxed">
+          Only <span className="font-semibold text-slate-700">Seller</span> accounts can list products.
         </p>
-        <a
-          href="/login"
-          className="inline-flex items-center justify-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl font-semibold text-sm hover:bg-slate-800 transition w-full"
-        >
-          Go to Login
+        <a href="/login"
+          className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-semibold text-sm transition-all shadow-lg shadow-indigo-200 w-full">
+          Sign In <ArrowRight size={14}/>
         </a>
       </div>
     </div>
   );
 }
 
-/* ─────────────────── MAIN COMPONENT ─────────────────── */
+/* ═══════════════════════════════════════════
+   ROOT COMPONENT
+═══════════════════════════════════════════ */
 export default function AddProduct() {
-  const [step, setStep]           = useState(1);
-  const [productId, setProductId] = useState(null);
-
-  // Step 1 state — category is now part of productData
-  const [productData, setProductData] = useState({
-    name: "", brand: "", category: "", description: "",
-  });
+  const [step,        setStep]        = useState(1);
+  const [productId,   setProductId]   = useState(null);
+  const [productData, setProductData] = useState({ name:"", brand:"", category:"", description:"" });
   const [step1Loading, setStep1Loading] = useState(false);
-  const [step1Error, setStep1Error]     = useState("");
+  const [step1Error,   setStep1Error]   = useState("");
   const [step1Success, setStep1Success] = useState(false);
 
-  // Dropdown data
-  const [colors, setColors]       = useState([]);
-  const [sizes, setSizes]         = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [colors,      setColors]      = useState([]);
+  const [sizes,       setSizes]       = useState([]);
+  const [categories,  setCategories]  = useState([]);
   const [metaLoading, setMetaLoading] = useState(true);
-  const [metaError, setMetaError]     = useState("");
+  const [metaError,   setMetaError]   = useState("");
 
-  // Role guard — must come after all hooks
+  // Role guard
   const token = getToken();
   const role  = getUserRole();
-  if (!token)                                    return <AccessDenied />;
-  if (role && role.toLowerCase() !== "seller")   return <AccessDenied />;
+  if (!token)                                  return <AccessDenied/>;
+  if (role && role.toLowerCase() !== "seller") return <AccessDenied/>;
 
-  // Fetch colors, sizes, categories
+  // Fetch dropdowns
   useEffect(() => {
-    const fetchMeta = async () => {
-      setMetaLoading(true);
-      setMetaError("");
+    (async () => {
+      setMetaLoading(true); setMetaError("");
       try {
         const [colRes, sizeRes, catRes] = await Promise.all([
-          axios.get(`${API}/VariantColorView/`,  { headers: authHeaders() }),
-          axios.get(`${API}/VariantSizeView/`,   { headers: authHeaders() }),
-          axios.get(`${API}/Categoriesdata/`,    { headers: authHeaders() }),
+          axios.get(`${API}/VariantColorView/`, { headers: authToken() }),
+          axios.get(`${API}/VariantSizeView/`,  { headers: authToken() }),
+          axios.get(`${API}/Categoriesdata/`,   { headers: authToken() }),
         ]);
-        setColors(colRes.data      || []);
-        setSizes(sizeRes.data      || []);
-        setCategories(catRes.data  || []);
-      } catch (e) {
-        console.error("Failed to load metadata", e);
-        setMetaError("Failed to load categories / colors / sizes. Please refresh.");
+        setColors(colRes.data || []);
+        setSizes(sizeRes.data || []);
+        setCategories(catRes.data || []);
+      } catch {
+        setMetaError("Could not load options — please refresh the page.");
       } finally {
         setMetaLoading(false);
       }
-    };
-    fetchMeta();
+    })();
   }, []);
 
-  const handleProductChange = (key, val) =>
-    setProductData((d) => ({ ...d, [key]: val }));
+  const handleChange = (key, val) => setProductData((d) => ({ ...d, [key]: val }));
 
   const submitProduct = async () => {
-    setStep1Loading(true);
-    setStep1Error("");
+    setStep1Loading(true); setStep1Error("");
     try {
-      const res = await axios.post(
-        `${API}/product/`,
-        {
-          name:        productData.name.trim(),
-          brand:       productData.brand.trim(),
-          category:    productData.category,        // FK id sent to backend
-          description: productData.description.trim(),
-        },
-        { headers: authHeaders() }
-      );
+      // Product has no image field — send JSON
+      const res = await axios.post(`${API}/product/`, {
+        name:        productData.name.trim(),
+        brand:       productData.brand.trim(),
+        category:    productData.category,
+        description: productData.description.trim(),
+      }, { headers: { "Content-Type": "application/json", ...authToken() } });
+
       const id = res.data?.id || res.data?.product_id;
       setProductId(id);
       setStep1Success(true);
-      setTimeout(() => { setStep1Success(false); setStep(2); }, 2000);
+      setTimeout(() => { setStep1Success(false); setStep(2); }, 2200);
     } catch (err) {
-      const data = err?.response?.data;
-      const msg  = data
-        ? Object.values(data).flat().join(", ")
-        : "Failed to create product. Please try again.";
-      setStep1Error(msg);
+      const d = err?.response?.data;
+      setStep1Error(d ? Object.values(d).flat().join(" · ") : "Failed to create product.");
     } finally {
       setStep1Loading(false);
     }
   };
 
   const resetAll = () => {
-    setStep(1);
-    setProductId(null);
-    setProductData({ name: "", brand: "", category: "", description: "" });
+    setStep(1); setProductId(null);
+    setProductData({ name:"", brand:"", category:"", description:"" });
     setStep1Error("");
   };
 
   return (
     <>
-      <style>{`
-        @keyframes popIn {
-          0%   { opacity:0; transform:scale(0.85) translateY(20px); }
-          70%  { transform:scale(1.03) translateY(-2px); }
-          100% { opacity:1; transform:scale(1) translateY(0); }
-        }
-        @keyframes shrinkBar {
-          from { width:100%; }
-          to   { width:0%; }
-        }
-        @keyframes fadeIn {
-          from { opacity:0; transform:translateY(-6px); }
-          to   { opacity:1; transform:translateY(0); }
-        }
-        .animate-popIn      { animation: popIn      0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
-        .animate-shrinkBar  { animation: shrinkBar  3.5s linear both; }
-        .animate-fadeIn     { animation: fadeIn     0.2s ease-out both; }
-        .custom-scroll::-webkit-scrollbar       { width:4px; }
-        .custom-scroll::-webkit-scrollbar-track { background:transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background:#e2e8f0; border-radius:99px; }
-      `}</style>
+      <style>{STYLES}</style>
 
-      {/* Step 1 success popup */}
       {step1Success && (
         <SuccessPopup
           message="Product Created!"
-          subtitle={`"${productData.name}" is ready. Now add variants.`}
+          subtitle={`"${productData.name}" ready — now add variants`}
           onClose={() => setStep1Success(false)}
         />
       )}
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100 flex items-start justify-center py-10 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-indigo-50/40 to-slate-100 flex items-start justify-center py-10 px-4">
         <div className="w-full max-w-xl">
 
-          {/* Page header */}
+          {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-full px-4 py-1.5 text-xs font-semibold text-slate-700 shadow-sm mb-4">
-              <Package size={13} />
-              Seller Dashboard
+            <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-1.5 text-xs font-bold text-indigo-600 shadow-sm mb-4 tracking-wide">
+              <Store size={12}/> Seller Portal
             </div>
-            <h1 className="text-3xl font-black text-gray-900">Add New Product</h1>
-            <p className="text-gray-500 text-sm mt-1">Complete all steps to publish your product</p>
+            <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">New Listing</h1>
+            <p className="text-slate-400 text-sm mt-2">Complete both steps to publish your product</p>
           </div>
 
-          <StepIndicator currentStep={step} />
+          <StepIndicator current={step}/>
 
-          {/* Meta fetch error */}
-          {metaError && (
-            <div className="mb-4">
-              <ErrorBanner message={metaError} onClose={() => setMetaError("")} />
-            </div>
-          )}
+          {metaError && <ErrorBanner message={metaError} onClose={() => setMetaError("")}/>}
 
-          {/* Main card */}
-          <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 sm:p-8">
-            {/* Show loader only on step 2 while meta is loading */}
-            {metaLoading && step === 2 ? (
-              <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <Loader2 size={28} className="animate-spin text-slate-400" />
-                <p className="text-sm text-gray-400">Loading options...</p>
-              </div>
-            ) : step === 1 ? (
-              <Step1
-                data={productData}
-                onChange={handleProductChange}
-                onNext={submitProduct}
-                loading={step1Loading}
-                error={step1Error}
-                onErrorClose={() => setStep1Error("")}
-                categories={categories}       
-              />
-            ) : step === 2 ? (
-              <Step2
-                productId={productId}
-                colors={colors}
-                sizes={sizes}
-                onDone={() => setStep(3)}
-                onBack={() => setStep(1)}
-              />
-            ) : (
-              <Step3 onAddAnother={resetAll} />
-            )}
+          <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 sm:p-8 anim-slide-up">
+            {metaLoading && step === 2
+              ? <MetaSkeleton/>
+              : step === 1
+              ? <Step1
+                  data={productData} onChange={handleChange}
+                  onNext={submitProduct} loading={step1Loading}
+                  error={step1Error} onErrorClose={() => setStep1Error("")}
+                  categories={categories}
+                />
+              : step === 2
+              ? <Step2
+                  productId={productId}
+                  colors={colors} sizes={sizes}
+                  onDone={() => setStep(3)} onBack={() => setStep(1)}
+                />
+              : <Step3 onAddAnother={resetAll}/>
+            }
           </div>
 
-          <p className="text-center text-xs text-gray-400 mt-6">
-            All products are reviewed before going live · SpeedXS Seller Portal
+          <p className="text-center text-xs text-slate-400 mt-6">
+            All listings are reviewed before going live · SpeedXS Seller Portal
           </p>
         </div>
       </div>
