@@ -19,6 +19,7 @@ import ProductPage from  './components/product/itemView'
 import Wishlist from './components/product/whislist.jsx'
 import SellerDashboard from "./components/sellerDashboard/Sellerdash";
 import Address from "./components/pages/Address";
+import ProductRating from "./components/pages/Ratingproduct";
 
 
 export default function App() {
@@ -51,6 +52,7 @@ export default function App() {
         <Route path="/seller/add-product" element={<AddProduct />} />
         <Route path="/Wishlist" element={<Wishlist />} />
         <Route path="/seller/dashboard" element={<SellerDashboard />} />
+        <Route path="/product/rate/" element={<ProductRating />} />
       </Routes>
 <Footer/>
     </BrowserRouter>
