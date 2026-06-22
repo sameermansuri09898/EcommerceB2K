@@ -20,6 +20,8 @@ import Wishlist from './components/product/whislist.jsx'
 import SellerDashboard from "./components/sellerDashboard/Sellerdash";
 import Address from "./components/pages/Address";
 import ProductRating from "./components/pages/Ratingproduct";
+import SellerProfileSetup from "./components/sellercredentials/selleraccount.jsx";
+
 
 
 export default function App() {
@@ -47,6 +49,7 @@ export default function App() {
         <Route path="/ProductPage/:id" element={<ProductPage />} />
 
         <Route path="/verify-otp" element={<VerifyOTP />} />
+        <Route path="/seller-profile-setup" element={<SellerProfileSetup />} />
 
         <Route path="/Cart" element={<Cart />} />
         <Route path="/seller/add-product" element={<AddProduct />} />

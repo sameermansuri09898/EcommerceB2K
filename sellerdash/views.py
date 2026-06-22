@@ -18,26 +18,31 @@ from oders.productserializer import ProductSerializer
 
 
 class selleaccount(APIView):
-
-  permission_classes=[IsAuthenticated]
-  authentication_classes=[JWTAuthentication]
-
-  def post(self,request):
-    serializer=sellerserializer(data=request.data)
-    if serializer.is_valid():
-      seller=serializer.save()
-
-      otp=random_otp()
-      send_otp_email(seller.email, str(otp))
-      Otp.objects.create(user=seller, otp=otp, is_verified=False)
-      seller.is_verified=False
-      seller.user=seller
-      seller.save()
-      send_wellcome_email(seller.email)
-      return Response({"message":"Seller created successfully"}, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-  
-
+ 
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+ 
+    def post(self, request):
+        serializer = sellerserializer(data=request.data)
+        if serializer.is_valid():
+            seller = serializer.save()
+ 
+            seller.user = request.user
+            seller.is_verified = False
+            seller.save()
+ 
+            # Send OTP for email verification
+            otp = random_otp()
+            Otp.objects.create(user=seller, otp=otp, is_verified=False)
+            send_otp_email(seller.email, str(otp))
+            send_wellcome_email(seller.email)
+ 
+            return Response(
+                {"message": "Seller account created successfully. Please verify your email."},
+                status=status.HTTP_201_CREATED
+            )
+ 
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class Itpverification(APIView):
