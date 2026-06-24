@@ -676,7 +676,7 @@ export default function SellerProfileSetup() {
     setApiError("");
 
     try {
-      // Build multipart FormData for file uploads
+    
       const payload = new FormData();
       const textFields = [
         "shop_name","shop_category","shop_phone","shop_description",
@@ -743,7 +743,7 @@ export default function SellerProfileSetup() {
           />
         </div>
 
-        {/* Step indicator */}
+        
         <StepIndicator current={step} />
 
         {/* API Error */}
@@ -800,7 +800,7 @@ export default function SellerProfileSetup() {
 
         {/* Security note */}
         <p className="text-center text-xs text-gray-500 pb-6">
-          🔒 Your data is encrypted with 256-bit SSL. ShopNest never shares your information with third parties.
+          🔒 Your data is encrypted with 256-bit SSL. ShopNest never shares your information with third parties.Stay Calm
         </p>
       </div>
     </div>
