@@ -60,7 +60,9 @@ export default function LoginPage() {
       // Save JWT Tokens
       if (data.access_token) {
   localStorage.setItem("access", data.access_token);
+
 }
+if (data.role) localStorage.setItem("role", data.role);
 
 if (data.refresh_token) {
   localStorage.setItem("refresh", data.refresh_token);
